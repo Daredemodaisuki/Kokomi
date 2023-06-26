@@ -7,6 +7,7 @@
 ```python
 from main import Kokomi
 ```
+
 ### 2.当然请不要忘记带上她心爱的OceanHuedClam：
 
 ```python
@@ -25,6 +26,7 @@ waifu = Kokomi()
 
 ## Ⅱ 请Kokomi查询
 ### 1.为她所在的Watatsumi（Network）指定Sangonomiya（Overpass）：
+
   使用Watatsumi_set函数可以指定Sangonomiya，其：
 + 参数1为【预设名称，str】（"OSMde"、"OSMru"、"OGF"、"None"）：使用预设珊瑚宫（Overpass）伺服器配置，或不使用预设（"None"）；
 + 参数2为【自定名称，str】：参数1为"None"时，自定义珊瑚宫伺服器名称，默认为空；
@@ -44,6 +46,7 @@ waifu.Watatsumi_set("OSMde")
   后续Kokomi会在你指定的Sangonomiya寻找数据。
 
 ### 2.告诉她希望查询的内容：
+
   使用query函数可以请她帮帮忙，在前述指定的Sangonomiya寻找一些锦囊（OSM要素）数据，此函数：
 + 参数1为【查询指令，str】：在珊瑚宫（Overpass）查询的参数，以“data="后开始，默认为空，当然返回的报文也会告诉你不给东西查不到。
 

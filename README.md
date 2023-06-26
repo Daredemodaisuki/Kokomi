@@ -79,7 +79,7 @@ INFO: 0 relation (s) have been found.
 
 ### 3.查看内容：
 
-  上回书说到，彼时的Kokomi会把数据归类，但注意，她目前只能手搓XML，她把分好的内容放在了directive_dict中，里面长这样：
+  上回书说到，彼时的Kokomi会把数据归类，但注意，她目前是在手搓XML，她把分好的内容放在了directive_dict中，里面长这样：
 
 ```python
 {"node": {

@@ -197,3 +197,60 @@ class Kokomi:
             self.energy = self.energy - 1
             return -1
 
+
+class OceanHuedClam:
+    def __init__(self, main_type: str):
+        self.main = main_type  # 查询的 主 体 要素类型
+        self.time = "100"
+        self.limit_dict = {}  # 限制信息字典
+        self.set_dict = {}  # 要素集字典
+        self.text = ""  # 最终的文本
+
+    def key_value(self, key: str, relation: str, value=""):
+        relation_list = ["exist", "!exist", "=", "!=", "=!=", "v-reg", "!v-reg", "kv-reg", "v-Aa_no_care"]
+        # 存在key（value可不填）、不存在key、存在key且对应value匹配、存在key但对应value不匹配或不存在key、必须存在key但对应value不匹配，
+        # v可含正则表达式、v可含正则表达式但不匹配、kv皆可含正则表达式，v可含正则表达式且不分大小写
+        if relation in relation_list:
+            if relation not in ["exist", "!exist"] and value == "":
+                print("ERROR: Value needed except exist and !exist.\n错误的：除exist、!exist条件外需要键的值。\n")
+                return self
+            else:
+                self.limit_dict.update({key: {"value": value, "relation": relation}})
+                return self
+        else:
+            print("ERROR: Undefined key-value relation.\n错误的：未定义的键值关系。\n")
+            return self
+
+    def timeout(self, time: str):
+        self.time = time
+        return self
+
+    def get_text(self) -> str:
+        limit_info = self.main
+        for key in self.limit_dict:
+            # 开始处理key?value
+            value = self.limit_dict[key].get("value")
+            match self.limit_dict[key].get("relation"):
+                case "exist":  # 存在key（value可不填）
+                    now_info = "[\"" + key + "\"]"
+                case "!exist":  # 不存在key
+                    now_info = "[!\"" + key + "\"]"
+                case "=":  # 存在key且对应value匹配
+                    now_info = "[\"" + key + "\"" + "=\"" + value + "\"]"
+                case "!=":  # 存在key但对应value不匹配 或 不存在key
+                    now_info = "[\"" + key + "\"" + "!=\"" + value + "\"]"
+                case "=!=":  # 必须存在key但对应value不匹配
+                    now_info = "[\"" + key + "\"][\"" + key + "\"!=\"" + value + "\"]"
+                case "v-reg":  # v可含正则表达式
+                    now_info = "[\"" + key + "\"~\"" + value + "\"]"
+                case "!v-reg":  # v可含正则表达式但不匹配
+                    now_info = "[\"" + key + "\"!~\"" + value + "\"]"
+                case "kv-reg":  # kv皆可含正则表达式
+                    now_info = "~[\"" + key + "\"~\"" + value + "\"]"
+                case "v-Aa_no_care":  # v可含正则表达式且不分大小写
+                    now_info = "~[\"" + key + "\"~\"" + value + "\",i]"
+                case _:
+                    now_info = ""
+            limit_info = limit_info + now_info
+        self.text = "data=[out:xml][timeout:" + self.time + "];" + limit_info + ";" + "out body;"
+        return self.text

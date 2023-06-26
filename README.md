@@ -43,8 +43,14 @@ waifu.Watatsumi_set("OSMde")
   后续Kokomi会在你指定的Sangonomiya寻找数据。
 
 ### 2.告诉她希望查询的内容：
-  使用query函数可以请她帮帮忙，在前述指定的Sangonomiya寻找一些锦囊（OSM要素）数据：
-  如果你已经对各Sangonomiya的QL语句十分甚至九分熟悉，你可以直接写条件。
+  使用query函数可以请她帮帮忙，在前述指定的Sangonomiya寻找一些锦囊（OSM要素）数据，此函数：
++ 参数1为【查询指令，str】：在珊瑚宫（Overpass）查询的参数，以“data="后开始，默认为空，当然返回的报文也会告诉你不给东西查不到。
+  返回int：
++ 【2】：向珊瑚宫成功地GET了报文；
++ 【-1】：珊瑚宫没有传回任何消息，可能是海祇岛（Network）连接原因；
++ 【-2】：珊瑚宫api未指定。
+  如果你已经对各Sangonomiya的QL语句十分甚至九分熟悉，你可以直接写QL条件。
+  
     示例：请帮我找一找名称为“粮站院内”（name=粮站院内）的锦囊点
     
 ```python

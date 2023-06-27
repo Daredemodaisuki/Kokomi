@@ -208,8 +208,8 @@ limit1.key_value("name:en", "v-Aa_no_care", "Shimo-Kitazawa").key_value("train",
 
 #### ① 设置延时
 
-海染砗磲会设置一个延时，即Kokomi向珊瑚宫（Overpass）发送请求后珊瑚宫（Overpass）内部查询的等待时间，如果Kokomi在里面转悠到了101s，那么她会因为狠狠地超时而被珊瑚宫强制请离（Overpass返回超时信息），海染砗磲（QL语句）的延时默认为100（单位：秒），你可以通过timeout方法变更，此方法：
-+ 参数1为【等待时间, str】：本次查询的最大等待时间，后续get_full_text方法会将时间写在最前面。
+海染砗磲会设置一个延时，即Kokomi向珊瑚宫（Overpass）发送请求后珊瑚宫（Overpass）内部查询的等待时间，如果Kokomi在里面多转悠1秒，那么她会因为狠狠地超时而被珊瑚宫强制请离（Overpass返回超时信息），海染砗磲（QL语句）的延时默认为100（单位：秒），你可以通过timeout方法变更，此方法：
++ 参数1为【等待时间, str】：本次查询的最大等待时间，等待超过其+1s后只能得到超时信息，后续get_full_text方法会将时间写在最前面。
 
   返回OceanHuedClam：
 + 返回已经追加限制语句的OceanHuedClam。

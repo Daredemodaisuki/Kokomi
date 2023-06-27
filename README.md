@@ -170,6 +170,7 @@ limit1 = OceanHuedClam("nwr")
 + 参数1为【限定键】：限定必须出现或有对应值要求的键；
 + 参数2为【限制关系】（"exist"、"!exist"、"="、"!="、"=!="、"v-reg"、"!v-reg"、"kv-reg"、"v-Aa_no_care"）：限定键值之间的关系；
 + 参数3为【限定值】：对限定键的值的要求
+
   返回OceanHuedClam：
 + 如果成功，则返回已经追加限制语句的OceanHuedClam；
 + 否则原样不动地返回。

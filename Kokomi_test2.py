@@ -2,22 +2,33 @@ from main import Kokomi
 from main import OceanHuedClam
 from main import Jellyfish
 
-limit1 = OceanHuedClam("nwr", 0).key_value("name", "v-reg", "郁州")  # 限制语句1：nwr["name"~"郁州"]
+limit1 = OceanHuedClam("nwr", 0).key_value("name", "v-reg", "郁")  # 限制语句1：nwr["name"~"郁"]
 set1 = Jellyfish("a", limit1)  # 将限制1作为集合a的条件
-limit2 = OceanHuedClam("nwr").timeout("100").subset("a", set1).key_value("railway", "exist")
-# 限制语句2：nwr["railway"]，且设置a为这句话会使用的集合
-query_text = limit2.get_full_text("a")  # 设定最终输出集a（nwr["railway"]变为nwr.a["railway"]），并得到最终语句
-waifu = Kokomi()
-waifu.Watatsumi_set("OGF")
-waifu.query(query_text)
+limit2 = OceanHuedClam("node", 0).import_jellyfish(set1).query_with_jellyfish(set1).key_value("railway", "exist")
+# 引用集合set1，并设定为在set1中检索限制语句2：nwr["railway"]
+set2 = Jellyfish("b", limit2)
+limit3 = OceanHuedClam("nwr").import_jellyfish(set2).query_with_jellyfish(set2).key_value("public_transport", "exist")\
+    .key_value("train", "=", "yes").timeout("100")
+query_text = limit3.get_full_text()  # 得到最终语句
 
+print("最终语句为" + limit3.get_full_text())
+'''
 print(limit1.get_this_text())
 print(set1.get_this_text())
 print(limit2.get_this_text())
 print(limit2.get_semi_full_text())
-print(limit2.get_full_text("a"))
-print(waifu.directive_text_temp)
+print(limit2.get_full_text())
+print(limit3.get_semi_full_text())
+print(limit3.jellyfish_dict["b"].OceanHuedClam.jellyfish_dict)
+'''
 
+
+waifu = Kokomi()
+waifu.Watatsumi_set("OGF")
+waifu.query(query_text)
+
+print(waifu.directive_text_temp)
+''''''
 '''
 # 测试：说明无法产生集合的子集，Overpass应该也没有这个做法
 limit1 = OceanHuedClam("nwr", 0).key_value("name", "v-reg", "郁州")  # 限制语句1：nwr["name"~"郁州"]

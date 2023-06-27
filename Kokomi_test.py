@@ -22,7 +22,9 @@ waifu.how_are_you()
 waifu = Kokomi()
 waifu.Watatsumi_set("OGF")
 limit = OceanHuedClam("nwr").timeout("25").key_value("name", "v-reg", "郁州")
-waifu.query(limit.get_this_text())
+waifu.query("data=[out:xml][timeout:100];(nwr[\"name\"~\"郁州\"];)->.a;(nwr.a[\"railway\"];);out body;")
+print(waifu.directive_text_temp)
+'''
 for test_data in waifu.directive_dict["node"]:
     print("点ID：" + test_data, "：", waifu.directive_dict["node"][test_data])
 for test_data in waifu.directive_dict["relation"]:
@@ -35,3 +37,4 @@ limit = limit.key_value("railway", "exist")
 waifu.query(limit.get_this_text())
 for test_data in waifu.directive_dict["node"]:
     print("点ID：" + test_data, "：", waifu.directive_dict["node"][test_data])
+'''

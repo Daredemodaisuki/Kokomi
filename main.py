@@ -1,6 +1,8 @@
 import requests
 
 
+# Kokomi类：
+#   用于做查询和整理工作的Kokomi在这里。
 class Kokomi:
     def __init__(self):
         self.energy = 50
@@ -197,18 +199,19 @@ class Kokomi:
             return {}
 
 
-# QL条件语句类，一个海染对象即句话
+# 海染砗磲类（QL语句）类：
+#   一个海染砗磲对象即一句话，其可用于修饰水母（要素集）或者直接限定核心查询内容。
 class OceanHuedClam:
     def __init__(self, directive_type: str, if_this_main: int = 1):
-        self.if_main = if_this_main
+        self.if_main = if_this_main  # 是否为最主体（暂时未用）
         self.main_type = directive_type  # 查询的 主 体 要素类型
         self.time = "100"
         self.limit_dict = {}  # 限制信息字典
         self.jellyfish_dict = {}  # 要素集字典
-        self.output_jellyfish = "_"
-        self.text = ""  # 最终的文本
+        self.jellyfish_use = "_"
+        self.text = ""  # 局部限定文本
 
-    # 键值关系限制语句：限定查询主体的key与value。
+    # 海染砗磲（QL语句）之键值关系限制语句：限定查询主体的key与value。
     #   参数1为【限定键】：限定必须出现或有对应值要求的键；
     #   参数2为【限制关系】（"exist"、"!exist"、"="、"!="、"=!="、"v-reg"、"!v-reg"、"kv-reg"、"v-Aa_no_care"）：限定键值之间的关系
     #   参数3为【限定值】：对限定键的值的要求
@@ -229,15 +232,36 @@ class OceanHuedClam:
             print("ERROR: Undefined key-value relation.\n错误的：未定义的键值关系。\n")
             return self
 
-    def subset(self, name: str, subset: 'Jellyfish') -> 'OceanHuedClam':
-        self.jellyfish_dict.update({name: subset})
+    # 引用水母（要素集）：将水母引入海染砗磲（QL语句），海染砗磲可以指定限定范围为被引用的水母之一。
+    #   参数1为【水母, Jellyfish】：欲引用的水母。
+    # 返回OceanHuedClam：
+    #   如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。
+    def import_jellyfish(self, jellyfish: 'Jellyfish') -> 'OceanHuedClam':
+        self.jellyfish_dict.update({jellyfish.name: jellyfish})
         return self
 
+    # 指定海染砗磲（QL语句）的查询限定范围：指定该海染砗磲仅在特定水母（要素集）内查询。
+    #   参数1为【水母名称, str】：欲使用的水母的名称。
+    # 返回OceanHuedClam：
+    #   如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。
+    def query_with_jellyfish(self, jellyfish_name: str):
+        for jellyfish in self.jellyfish_dict:
+            if self.jellyfish_dict[jellyfish].name == jellyfish_name:
+                self.jellyfish_use = jellyfish_name
+        return self
+
+    # 指定海染砗磲（QL语句）的查询最大等待时间。
+    #   参数1为【等待时间, str】：本次查询的最大等待时间，仅需要在最终的、最核心的海染砗磲中设定，get_full_text函数会将时间写在最前面。
+    # 返回OceanHuedClam：
+    #   如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。
     def timeout(self, time: str) -> 'OceanHuedClam':
         self.time = time
         return self
 
-    # 输出kv关系、id、局部bbox限制关系语句
+    # 获取该海染砗磲（QL语句）中的局部查询语句
+    # 返回str：
+    #   返回该海染砗磲中关于键值关系、id限定、局部界定框限制的语句。如：“["name"~"郁州"](id="xxx");”。
+    #   TODO：id限定、局部界定框限制（圆括号部分）
     def get_this_text(self) -> str:
         limit_info = ""
         for key in self.limit_dict:
@@ -267,43 +291,51 @@ class OceanHuedClam:
             limit_info = limit_info + now_info
         self.text = limit_info + ";"
         return self.text
-        # self.text = "data=[out:xml][timeout:" + self.time + "];" + limit_info + ";" + "out body;" 对单独语句先不写头和尾巴了，最后加
 
-    # 取到(nwr["name"~"郁州"];)->.a;nwr.a["railway"]（如果self中有jellyfish，并指定a）
-    def get_semi_full_text(self, jellyfish_used: str = "_") -> str:
+    # 获取该海染砗磲（QL语句）中的查询语段
+    # 返回str：
+    #   返回加工后的局部限定语句，比如若该海染砗磲有水母限定，使用水母相关方法添加水母有关语句。如Jellyfish_text + “(nwr.a["railway"];)”。
+    def get_semi_full_text(self) -> str:
         main_type = self.main_type
         jellyfish_text = ""
 
         for jellyfish in self.jellyfish_dict:
             jellyfish_text = jellyfish_text + self.jellyfish_dict[jellyfish].get_this_text()
-
-        if jellyfish_used != "_":
-            semi_full_text = jellyfish_text + main_type + "." + jellyfish_used + self.get_this_text()
+        # print("aaa:" + jellyfish_text)
+        if self.jellyfish_use != "_":
+            semi_full_text = jellyfish_text + "(" + main_type + "." + self.jellyfish_use + self.get_this_text() + ")"
         else:
-            semi_full_text = main_type + self.get_this_text()
+            semi_full_text = "(" + main_type + self.get_this_text() + ")"
         return semi_full_text
 
-    # 如果这是最中心哪个要输出的内容，则这里生成API全文
-    def get_full_text(self, jellyfish_used: str = "_") -> str:
+    # 获取该海染砗磲（QL语句）的最终查询语句，仅在最终的、最核心的海染砗磲中使用。
+    # 返回str：
+    #   该返回可直接作为API的查询语句，是其“interpreter?”的部分。
+    #   如：“data=[out:xml][timeout:100];(nwr["name"~"郁"];)->.a;(node.a["railway"];)->.b;
+    #   (way.b["public_transport"]["train"="yes"];);out body;”。
+    def get_full_text(self) -> str:
         main_type = self.main_type
         jellyfish_text = ""
         for jellyfish in self.jellyfish_dict:
             jellyfish_text = jellyfish_text + self.jellyfish_dict[jellyfish].get_this_text()
-        if jellyfish_used != "_":
-            full_text = "data=[out:xml][timeout:" + self.time + "];" + jellyfish_text + main_type + "." \
-                        + jellyfish_used + self.get_this_text() + "out body;"
+        if self.jellyfish_use != "_":
+            full_text = "data=[out:xml][timeout:" + self.time + "];" + self.get_semi_full_text() + ";out body;"
         else:
-            full_text = "data=[out:xml][timeout:" + self.time + "];" + jellyfish_text + main_type \
-                        + self.get_this_text() + "out body;"
+            full_text = "data=[out:xml][timeout:" + self.time + "];" + self.get_semi_full_text() + ";out body;"
         return full_text
 
 
-# 要素集
+# 水母（要素集）类：
+#   做好用于修饰水母的海染砗磲（QL语句）可将该海染砗磲加给水母，水母中可查询到的内容一定符合海染砗磲的规定。
+#   注意：一般水母和海染砗磲是交替使用的，水母用于指定海染砗磲的查询范围（在水母中），海染砗磲用于修饰水母中的内容要求。
 class Jellyfish:
     def __init__(self, name: str, OHC: 'OceanHuedClam'):
         self.name = name
         self.OceanHuedClam = OHC
 
-    # 取到(nwr["name"~"郁州"];)->.a;
-    def get_this_text(self):
-        return "(" + self.OceanHuedClam.get_semi_full_text() + ")->." + self.name + ";"
+    # 获取该水母（要素集）的海染砗磲（QL语句）的查询语段，一般在下一级的海染砗磲中调用以说明下一级的海染砗磲的查询范围将被限制在这个水母中。
+    # 返回str：
+    #   返回该水母在修饰其的海染砗磲的限制下的海染砗磲查询语段，如“(nwr["name"~"郁州"];)->.a;”。
+    def get_this_text(self) -> str:
+        return self.OceanHuedClam.get_semi_full_text() + "->." + self.name + ";"
+

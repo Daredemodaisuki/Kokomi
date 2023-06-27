@@ -1,4 +1,3 @@
-import keqing
 import requests
 
 
@@ -41,7 +40,7 @@ class Kokomi:
     #   【0】：成功使用自定义配置；
     #   【-1】：使用了未定义的预设名称；
     #   【-2】：不完整的自定义配置。
-    def Watatsumi_set(self, preset: str, name="", api="") -> int:
+    def Watatsumi_set(self, preset: str, name: str = "", api: str = "") -> int:
         self.energy_check()
         Watatsumi_list = {
             "OSMde": {
@@ -89,7 +88,7 @@ class Kokomi:
     #   【2】：向珊瑚宫成功地GET了报文；
     #   【-1】：珊瑚宫没有传回任何消息，可能是海祇岛（Network）连接原因；
     #   【-2】：珊瑚宫api未指定。
-    def query(self, content="") -> int:
+    def query(self, content: str = "") -> int:
         self.energy_check()
         if self.Watatsumi["Sangonomiya_api"] == "":
             print("ERROR: No Sangonomiya(Overpass) info.\n错误的：珊瑚宫（Overpass）未指定。\n")
@@ -124,7 +123,7 @@ class Kokomi:
     #       },
     #   ...
     #   }。
-    def get_directive_dict(self, directive_type: str, directive_text=""):
+    def get_directive_dict(self, directive_type: str, directive_text: str = ""):
         if directive_type in self.directive_type:
             directive_front = 0
             directive_behind = 0
@@ -195,18 +194,27 @@ class Kokomi:
         else:
             print("ERROR: Undefined Directive(Feature) type.\n错误的：没有定义的锦囊（要素）类型。\n")
             self.energy = self.energy - 1
-            return -1
+            return {}
 
 
+# QL条件语句类，一个海染对象即句话
 class OceanHuedClam:
-    def __init__(self, main_type: str):
-        self.main = main_type  # 查询的 主 体 要素类型
+    def __init__(self, directive_type: str, if_this_main: int = 1):
+        self.if_main = if_this_main
+        self.main_type = directive_type  # 查询的 主 体 要素类型
         self.time = "100"
         self.limit_dict = {}  # 限制信息字典
-        self.set_dict = {}  # 要素集字典
+        self.jellyfish_dict = {}  # 要素集字典
+        self.output_jellyfish = "_"
         self.text = ""  # 最终的文本
 
-    def key_value(self, key: str, relation: str, value=""):
+    # 键值关系限制语句：限定查询主体的key与value。
+    #   参数1为【限定键】：限定必须出现或有对应值要求的键；
+    #   参数2为【限制关系】（"exist"、"!exist"、"="、"!="、"=!="、"v-reg"、"!v-reg"、"kv-reg"、"v-Aa_no_care"）：限定键值之间的关系
+    #   参数3为【限定值】：对限定键的值的要求
+    # 返回OceanHuedClam：
+    #   如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。
+    def key_value(self, key: str, relation: str, value: str = "") -> 'OceanHuedClam':
         relation_list = ["exist", "!exist", "=", "!=", "=!=", "v-reg", "!v-reg", "kv-reg", "v-Aa_no_care"]
         # 存在key（value可不填）、不存在key、存在key且对应value匹配、存在key但对应value不匹配或不存在key、必须存在key但对应value不匹配，
         # v可含正则表达式、v可含正则表达式但不匹配、kv皆可含正则表达式，v可含正则表达式且不分大小写
@@ -221,12 +229,17 @@ class OceanHuedClam:
             print("ERROR: Undefined key-value relation.\n错误的：未定义的键值关系。\n")
             return self
 
-    def timeout(self, time: str):
+    def subset(self, name: str, subset: 'Jellyfish') -> 'OceanHuedClam':
+        self.jellyfish_dict.update({name: subset})
+        return self
+
+    def timeout(self, time: str) -> 'OceanHuedClam':
         self.time = time
         return self
 
-    def get_text(self) -> str:
-        limit_info = self.main
+    # 输出kv关系、id、局部bbox限制关系语句
+    def get_this_text(self) -> str:
+        limit_info = ""
         for key in self.limit_dict:
             # 开始处理key?value
             value = self.limit_dict[key].get("value")
@@ -252,5 +265,45 @@ class OceanHuedClam:
                 case _:
                     now_info = ""
             limit_info = limit_info + now_info
-        self.text = "data=[out:xml][timeout:" + self.time + "];" + limit_info + ";" + "out body;"
+        self.text = limit_info + ";"
         return self.text
+        # self.text = "data=[out:xml][timeout:" + self.time + "];" + limit_info + ";" + "out body;" 对单独语句先不写头和尾巴了，最后加
+
+    # 取到(nwr["name"~"郁州"];)->.a;nwr.a["railway"]（如果self中有jellyfish，并指定a）
+    def get_semi_full_text(self, jellyfish_used: str = "_") -> str:
+        main_type = self.main_type
+        jellyfish_text = ""
+
+        for jellyfish in self.jellyfish_dict:
+            jellyfish_text = jellyfish_text + self.jellyfish_dict[jellyfish].get_this_text()
+
+        if jellyfish_used != "_":
+            semi_full_text = jellyfish_text + main_type + "." + jellyfish_used + self.get_this_text()
+        else:
+            semi_full_text = main_type + self.get_this_text()
+        return semi_full_text
+
+    # 如果这是最中心哪个要输出的内容，则这里生成API全文
+    def get_full_text(self, jellyfish_used: str = "_") -> str:
+        main_type = self.main_type
+        jellyfish_text = ""
+        for jellyfish in self.jellyfish_dict:
+            jellyfish_text = jellyfish_text + self.jellyfish_dict[jellyfish].get_this_text()
+        if jellyfish_used != "_":
+            full_text = "data=[out:xml][timeout:" + self.time + "];" + jellyfish_text + main_type + "." \
+                        + jellyfish_used + self.get_this_text() + "out body;"
+        else:
+            full_text = "data=[out:xml][timeout:" + self.time + "];" + jellyfish_text + main_type \
+                        + self.get_this_text() + "out body;"
+        return full_text
+
+
+# 要素集
+class Jellyfish:
+    def __init__(self, name: str, OHC: 'OceanHuedClam'):
+        self.name = name
+        self.OceanHuedClam = OHC
+
+    # 取到(nwr["name"~"郁州"];)->.a;
+    def get_this_text(self):
+        return "(" + self.OceanHuedClam.get_semi_full_text() + ")->." + self.name + ";"

@@ -143,7 +143,7 @@ for nodeID in waifu.directive_dict.get("node")[nodeID]:
 海染（音：hǎirǎn）砗磲（我猜你知道怎么读）在这里的概念大致是QL语句，一个海染砗磲对象就是代表一条QL语句，可以用来做内容限定，比如要求返回的锦囊（要素）有特定名称。
 
 当你想做限定时，刷一个海染砗磲，其初始化方法中：
-+ 参数1为【限定主体的类型】（"node"、"way"、"relation"、"nw"、"nr"、"wr"、"nwr"）：说明该海染砗磲是用来查询或者修饰何种类型的锦囊（要素），括号中的后4中类型为点、线、关系中2个或3个的组合的缩写，表示可以同时查询多种锦囊（要素）。
++ 参数1为【限定主体的类型，str】（"node"、"way"、"relation"、"nw"、"nr"、"wr"、"nwr"）：说明该海染砗磲是用来查询或者修饰何种类型的锦囊（要素），括号中的后4中类型为点、线、关系中2个或3个的组合的缩写，表示可以同时查询多种锦囊（要素）。
 
 示例：
 
@@ -160,17 +160,21 @@ limit1 = OceanHuedClam("nwr")
 ... TODO
 ```
 
-你可能注意到，这些方法都返回新的海染砗磲对象，海染砗磲采用方法链（method chaining）模式，所以使用其的方法是直接将方法追加至现有的海染砗磲（QL语句）后，可以连续追加；这些方法内部也对self的内容进行了修改，所以你可以选择使用一个新的变量来承载追加方法后海染砗磲（QL语句），也可以不用，即下面的示例中limit1和limit2是等价的；此外，即使在limit1变化前将其赋给limit3，limit3在limit1变化后还是与limit1保持等价：
+你可能注意到，这些方法都返回新的海染砗磲对象，海染砗磲采用方法链（method chaining）模式，所以使用其的方法是直接将方法追加至现有的海染砗磲（QL语句）后，可以连续追加；这些方法内部也对self的内容进行了修改，所以你可以选择使用一个新的变量来承载追加方法后海染砗磲（QL语句），也可以不用，即下面的示例中limit1和limit2是等价的；此外，派森的赋值只大致算是赋地址，所以即使在limit1变化前将其赋给limit3，limit3在limit1变化后还是与limit1保持等价：
 
 ```python
 limit1 = OceanHuedClam("nwr")
 limit3 = limit1
-limit2 = limit1.key_value("name", "v-reg", "原").key_value("amd", "=", "yes")
+limit2 = limit1.key_value("name", "v-reg", "foo").key_value("amd", "=", "yes")
 
 if limit1 == limit2:
   print("这都能一样？")
 if limit3 == limit1:
   print("不可能，绝对不可能")
+
+print(limit1.get_full_text())  # 再调用一个输出的方法试试看？
+print(limit2.get_full_text())
+print(limit3.get_full_text())
 ```
 
 输出：
@@ -178,14 +182,17 @@ if limit3 == limit1:
 ```
 这都能一样？
 不可能，绝对不可能
+data=[out:xml][timeout:100];(nwr["name"~"foo"]["amd"="yes"];);out body;
+data=[out:xml][timeout:100];(nwr["name"~"foo"]["amd"="yes"];);out body;
+data=[out:xml][timeout:100];(nwr["name"~"foo"]["amd"="yes"];);out body;
 ```
 
 #### ① key_value方法
 
 此方法用于限定查询主体的键值关系，其：
-+ 参数1为【限定键】：限定必须出现或有对应值要求的键；
-+ 参数2为【限制关系】（"exist"、"!exist"、"="、"!="、"=!="、"v-reg"、"!v-reg"、"kv-reg"、"v-Aa_no_care"）：限定键值之间的关系；
-+ 参数3为【限定值】：对限定键的值的要求
++ 参数1为【限定键，str】：限定必须出现或有对应值要求的键；
++ 参数2为【限制关系，str】（"exist"、"!exist"、"="、"!="、"=!="、"v-reg"、"!v-reg"、"kv-reg"、"v-Aa_no_care"）：限定键值之间的关系；
++ 参数3为【限定值，str】：对限定键的值的要求
 
   返回OceanHuedClam：
 + 如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。

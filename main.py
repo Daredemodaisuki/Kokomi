@@ -206,14 +206,17 @@ class OceanHuedClam:
         self.if_main = if_this_main  # 是否为最主体（暂时未用）
         self.main_type = directive_type  # 查询的 主 体 要素类型
         self.time = "100"
-        self.limit_dict = {}  # 限制信息字典
+        self.k_v_dict = {}  # 限制信息字典
+        self.id_list = []  # 限制ID
+        self.bbox_dict = {}  # 限制边界
         self.jellyfish_dict = {}  # 要素集字典
         self.jellyfish_use = "_"
+        self.recurse_dict = {}  # 递归字典
         self.text = ""  # 局部限定文本
 
     # 海染砗磲（QL语句）之键值关系限制语句：限定查询主体的key与value。
     #   参数1为【限定键】：限定必须出现或有对应值要求的键；
-    #   参数2为【限制关系】（"exist"、"!exist"、"="、"!="、"=!="、"v-reg"、"!v-reg"、"kv-reg"、"v-Aa_no_care"）：限定键值之间的关系
+    #   参数2为【限制关系】（"exist"、"!exist"、"="、"!="、"=!="、"v-reg"、"!v-reg"、"kv-reg"、"v-Aa_no_care"）：限定键值之间的关系；
     #   参数3为【限定值】：对限定键的值的要求
     # 返回OceanHuedClam：
     #   如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。
@@ -226,11 +229,52 @@ class OceanHuedClam:
                 print("ERROR: Value needed except exist and !exist.\n错误的：除exist、!exist条件外需要键的值。\n")
                 return self
             else:
-                self.limit_dict.update({key: {"value": value, "relation": relation}})
+                self.k_v_dict.update({key: {"value": value, "relation": relation}})
                 return self
         else:
             print("ERROR: Undefined key-value relation.\n错误的：未定义的键值关系。\n")
             return self
+
+    def id(self, directive_id: str) -> 'OceanHuedClam':
+        self.id_list = self.id_list.append(directive_id)
+        return self
+
+    def in_bbox(self, e: str, n: str, s: str, w: str) -> 'OceanHuedClam':
+        self.bbox_dict = {"E": e, "N": n, "S": s, "W": w}
+        return self
+
+    # 递归：查询主体语句“xx.y[]();”完了之后的“>;”、“<;”，必须依赖主体语句，所以maintype肯定有
+    def recurse(self, jellyfish: str = "", direction: str = "") -> 'OceanHuedClam':
+        jellyfish_used = jellyfish
+        if jellyfish_used == "":
+            jellyfish_used = self.jellyfish_use
+
+        if (jellyfish_used == "_") or (jellyfish_used in self.jellyfish_dict):
+            if direction == "":
+                # 如果没填方向就看下本句话或者要用的集合里面的那句话的要素类型。
+                if jellyfish_used == "_":
+                    directive_type = self.main_type
+                else:
+                    directive_type = self.jellyfish_dict[jellyfish_used].OceanHuedClam.main_type
+                # rw下，n上，其他的报错
+                if directive_type == ("relation" or "way"):
+                    self.recurse_dict.update({"_": "down"})
+                    print(
+                        "WARN: The recurse direction is automatically set as \"down\".\n警告：递归方向自动设置为下行。\n")
+                elif directive_type == "node":
+                    self.recurse_dict.update({"_": "up"})
+                    print("WARN: The recurse direction is automatically set as \"up\".\n警告：递归方向自动设置为上行。\n")
+                else:
+                    print("ERROR: Recurse direction need.\n错误的：必须指定递归方向。\n")
+            else:
+                if direction in ["up", "down", "up_to_relation", "down_from_relation"]:
+                    self.recurse_dict.update({jellyfish_used: direction})
+                else:
+                    print("ERROR: Undefined recurse direction.\n错误的：未定义的递归方向。\n")
+        else:
+            print("ERROR: Non-imported jellyfish(set).\n错误的：使用没有引用的水母（要素集）。\n")
+
+        return self
 
     # 引用水母（要素集）：将水母引入海染砗磲（QL语句），海染砗磲可以指定限定范围为被引用的水母之一。
     #   参数1为【水母, Jellyfish】：欲引用的水母。
@@ -244,10 +288,13 @@ class OceanHuedClam:
     #   参数1为【水母名称, str】：欲使用的水母的名称。
     # 返回OceanHuedClam：
     #   如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。
-    def query_with_jellyfish(self, jellyfish_name: str):
+    # TODO：考虑和import合并？
+    def in_jellyfish(self, jellyfish_name: str):
         for jellyfish in self.jellyfish_dict:
             if self.jellyfish_dict[jellyfish].name == jellyfish_name:
                 self.jellyfish_use = jellyfish_name
+            else:
+                print("ERROR: Non-imported jellyfish(set).\n错误的：使用没有引用的水母（要素集）。\n")
         return self
 
     # 指定海染砗磲（QL语句）的查询最大等待时间。
@@ -264,10 +311,10 @@ class OceanHuedClam:
     #   TODO：id限定、局部界定框限制（圆括号部分）
     def get_this_text(self) -> str:
         limit_info = ""
-        for key in self.limit_dict:
-            # 开始处理key?value
-            value = self.limit_dict[key].get("value")
-            match self.limit_dict[key].get("relation"):
+        # 开始处理key?value
+        for key in self.k_v_dict:
+            value = self.k_v_dict[key].get("value")
+            match self.k_v_dict[key].get("relation"):
                 case "exist":  # 存在key（value可不填）
                     now_info = "[\"" + key + "\"]"
                 case "!exist":  # 不存在key
@@ -289,12 +336,28 @@ class OceanHuedClam:
                 case _:
                     now_info = ""
             limit_info = limit_info + now_info
-        self.text = limit_info + ";"
-        return self.text
+        # 处理id和其他限定（方括号后的圆括号部分）
+        if self.id_list:  # != []
+            id_info = "(id:"
+            for i in range(0, len(self.id_list)):
+                id_info = id_info + self.id_list[i]
+                if i < len(self.id_list):
+                    id_info = id_info + ","
+            id_info = id_info + ")"
+            limit_info = limit_info + id_info
+        elif self.bbox_dict != {}:
+            limit_info = limit_info + "(" + self.bbox_dict["E"] + self.bbox_dict["N"] + self.bbox_dict["S"]\
+                         + self.bbox_dict["W"] + ")"
+        limit_info = limit_info + ";"
+        # self.text = limit_info + ";"
+        # return self.text
+        # TODO：开始处理递归
+
+        return limit_info
 
     # 获取该海染砗磲（QL语句）中的查询语段
     # 返回str：
-    #   返回加工后的局部限定语句，比如若该海染砗磲有水母限定，使用水母相关方法添加水母有关语句。如Jellyfish_text + “(nwr.a["railway"];)”。
+    #   返回加工后的局部限定语句，比如若该海染砗磲有水母限定，使用水母相关方法添加水母有关语句。如jellyfish_text + “(nwr.a["railway"];)”。
     def get_semi_full_text(self) -> str:
         main_type = self.main_type
         jellyfish_text = ""
@@ -310,7 +373,7 @@ class OceanHuedClam:
 
     # 获取该海染砗磲（QL语句）的最终查询语句，仅在最终的、最核心的海染砗磲中使用。
     # 返回str：
-    #   该返回可直接作为API的查询语句，是其“interpreter?”的部分。
+    #   该返回可直接作为API的查询语句，是其“interpreter?”后的部分。
     #   如：“data=[out:xml][timeout:100];(nwr["name"~"郁"];)->.a;(node.a["railway"];)->.b;
     #   (way.b["public_transport"]["train"="yes"];);out body;”。
     def get_full_text(self) -> str:
@@ -338,4 +401,3 @@ class Jellyfish:
     #   返回该水母在修饰其的海染砗磲的限制下的海染砗磲查询语段，如“(nwr["name"~"郁州"];)->.a;”。
     def get_this_text(self) -> str:
         return self.OceanHuedClam.get_semi_full_text() + "->." + self.name + ";"
-

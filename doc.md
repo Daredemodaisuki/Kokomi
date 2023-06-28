@@ -160,20 +160,20 @@ limit1 = OceanHuedClam("nwr")
 ... TODO
 ```
 
-你可能注意到这些方法都返回新的海染砗磲对象，所以使用海染砗磲的方法时直接将方法追加至现有的海染砗磲后，可以连续追加；此外这些方法内部也对self的内容进行了修改，所以你可以选择使用一个新的变量来承载追加方法后海染砗磲（QL语句），也可以不用，即下面的示例中limit1和limit2是等价的：
+你可能注意到，这些方法都返回新的海染砗磲对象，所以使用海染砗磲的方法时直接将方法追加至现有的海染砗磲（QL语句）后，可以连续追加；此外这些方法内部也对self的内容进行了修改，所以你可以选择使用一个新的变量来承载追加方法后海染砗磲（QL语句），也可以不用，即下面的示例中limit1和limit2是等价的：
 
 ```python
 limit1 = OceanHuedClam("nwr")
-limit2 = limit1.key_value("name", "v-reg", "原")
+limit2 = limit1.key_value("name", "v-reg", "原").key_value("amd", "=", "yes")
 
 if limit1 == limit2:
-  print("用不用新的变量都一毛一样")
+  print("用不用新的都一毛一样")
 ```
 
 输出：
 
 ```
-用不用新的变量都一毛一样
+用不用新的都一毛一样
 ```
 
 #### ① key_value方法
@@ -208,6 +208,18 @@ limit1.key_value("name:en", "v-Aa_no_care", "Shimo-Kitazawa").key_value("train",
 
 ```
 [~"name:en"~"Shimo-Kitazawa",i]["train"]
+```
+
+如果对同一个键做出了多次规定，则只保留最后一次规定，示例：
+
+```python
+limit1.key_value("name", "=", "天云峠").key_value("name", "=", "天云山上下")  #“天云峠”将被顶掉
+```
+
+其相当于QL中的：
+
+```
+["name"="天云山上下"]
 ```
 
 ### 2. 水母（要素集）

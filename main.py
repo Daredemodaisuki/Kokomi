@@ -236,7 +236,7 @@ class OceanHuedClam:
             return self
 
     def id(self, directive_id: str) -> 'OceanHuedClam':
-        self.id_list = self.id_list.append(directive_id)
+        self.id_list.append(directive_id)
         return self
 
     def in_bbox(self, e: str, n: str, s: str, w: str) -> 'OceanHuedClam':
@@ -330,9 +330,9 @@ class OceanHuedClam:
                 case "!v-reg":  # v可含正则表达式但不匹配
                     now_info = "[\"" + key + "\"!~\"" + value + "\"]"
                 case "kv-reg":  # kv皆可含正则表达式
-                    now_info = "~[\"" + key + "\"~\"" + value + "\"]"
+                    now_info = "[~\"" + key + "\"~\"" + value + "\"]"
                 case "v-Aa_no_care":  # v可含正则表达式且不分大小写
-                    now_info = "~[\"" + key + "\"~\"" + value + "\",i]"
+                    now_info = "[~\"" + key + "\"~\"" + value + "\",i]"
                 case _:
                     now_info = ""
             limit_info = limit_info + now_info
@@ -341,7 +341,7 @@ class OceanHuedClam:
             id_info = "(id:"
             for i in range(0, len(self.id_list)):
                 id_info = id_info + self.id_list[i]
-                if i < len(self.id_list):
+                if i < len(self.id_list) - 1:
                     id_info = id_info + ","
             id_info = id_info + ")"
             limit_info = limit_info + id_info

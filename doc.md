@@ -160,20 +160,24 @@ limit1 = OceanHuedClam("nwr")
 ... TODO
 ```
 
-你可能注意到，这些方法都返回新的海染砗磲对象，所以使用海染砗磲的方法时直接将方法追加至现有的海染砗磲（QL语句）后，可以连续追加；此外这些方法内部也对self的内容进行了修改，所以你可以选择使用一个新的变量来承载追加方法后海染砗磲（QL语句），也可以不用，即下面的示例中limit1和limit2是等价的：
+你可能注意到，这些方法都返回新的海染砗磲对象，所以使用海染砗磲的方法时直接将方法追加至现有的海染砗磲（QL语句）后，可以连续追加；此外这些方法内部也对self的内容进行了修改，所以你可以选择使用一个新的变量来承载追加方法后海染砗磲（QL语句），也可以不用，即下面的示例中limit1和limit2是等价的，因为派森中存的还是地址，所以即使在limit1变化前将其赋给limit3，limit3在limit1变化后还是与limit1保持等价：
 
 ```python
 limit1 = OceanHuedClam("nwr")
+limit3 = limit1
 limit2 = limit1.key_value("name", "v-reg", "原").key_value("amd", "=", "yes")
 
 if limit1 == limit2:
-  print("用不用新的都一毛一样")
+  print("这都能一样？")
+if limit3 == limit1:
+  print("不可能，绝对不可能")
 ```
 
 输出：
 
 ```
-用不用新的都一毛一样
+这都能一样？
+不可能，绝对不可能
 ```
 
 #### ① key_value方法

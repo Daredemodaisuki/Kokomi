@@ -134,12 +134,17 @@ class Kokomi:
             while directive_text.find("<" + directive_type, directive_behind) != -1:
                 # 找报文开头结尾
                 directive_front = directive_text.find("<" + directive_type, directive_behind)
-                directive_behind = directive_text.find("</" + directive_type + ">", directive_front)
+                # 如果“"/>”比“">”先来，那说明只有一行，结尾是“/>“（/>不取双引号"因为取id要用）
+                # TODO：经纬度
+                if directive_text.find("/>", directive_front) < directive_text.find("\">", directive_front):
+                    directive_behind = directive_text.find("/>", directive_front)
+                else:  # 否则是很多行，结尾是"</" + directive_type + ">"
+                    directive_behind = directive_text.find("</" + directive_type + ">", directive_front)
                 dealt_text = directive_text[directive_front: directive_behind]
                 directive_found = directive_found + 1
 
                 # 找id
-                id_front = dealt_text.find("id=") + 4
+                id_front = dealt_text.find("id=\"") + 4
                 id_behind = dealt_text.find("\"", id_front)
                 directive_id = dealt_text[id_front:id_behind]
 

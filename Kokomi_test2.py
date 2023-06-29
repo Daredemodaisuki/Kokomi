@@ -56,16 +56,17 @@ print(waifu.directive_text_temp)
 # 测试4
 waifu = Kokomi()
 waifu.Watatsumi_set("OSMde")
-set1 = Jellyfish("set1", OceanHuedClam("node").in_bbox("106.614", "106.613", "30.176", "30.177").recurse("", "up"))
-limit2 = OceanHuedClam("nwr").import_jellyfish(set1).in_jellyfish("set1").key_value("name", "exist")
+limit1 = OceanHuedClam("node").in_bbox("106.614", "106.613", "30.176", "30.177").recurse("", "up")
+set1 = Jellyfish("set1", limit1)
+limit2 = OceanHuedClam("nwr").import_jellyfish(set1).in_jellyfish("set1").key_value("name", "exist").recurse("_", "up")
+
+print(limit1.get_full_text())
+waifu.query(limit1.get_full_text())
+# print(waifu.directive_text_temp)
+
+for node in waifu.directive_dict.get("node"):
+    print(node, waifu.directive_dict.get("node")[node])
 
 print(limit2.get_full_text())
 waifu.query(limit2.get_full_text())
-'''
-print(limit1.get_full_text())
-waifu.query(limit1.get_full_text())
 print(waifu.directive_text_temp)
-print(limit2.get_full_text())
-waifu.query(limit2.get_full_text())
-print(waifu.directive_text_temp)
-'''

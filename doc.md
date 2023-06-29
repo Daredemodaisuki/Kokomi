@@ -151,12 +151,13 @@ for nodeID in waifu.directive_dict.get("node")[nodeID]:
 limit1 = OceanHuedClam("nwr")
 ```
 
-然后，对要查询的内容做限定，有如下一些方法：
+然后，对要查询的内容做限定，有如下一些方法，部分方法需要配合水母（要素集）使用，见后：
 
 ```python
 ① def key_value(self, key: str, relation: str, value: str = "") -> 'OceanHuedClam'
-② def in_bbox(self, e: str, n: str, s: str, w: str) -> 'OceanHuedClam'
-③ def recurse(self, jellyfish: str = "", direction: str = "") -> 'OceanHuedClam'
+② def id(self, directive_id: str) -> 'OceanHuedClam'
+③ def in_bbox(self, e: str, n: str, s: str, w: str) -> 'OceanHuedClam'
+④ def recurse(self, jellyfish: str = "", direction: str = "") -> 'OceanHuedClam'
 ... TODO
 ```
 
@@ -262,6 +263,11 @@ node(id:114514);
 
   返回OceanHuedClam：
 + 如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。
+
+#### ④ recurse方法
+
+此方法用于递归查询，比如Kokomi找到了一个锦囊（要素）点，它在一条线上，你希望揪出那条线，当然，顺着线可能可以找到它所在的关系，等等等等，这叫递归，此方法：
++ 参数1为【欲递归的水母名，str】
 
 ### 2. 水母（要素集）
 

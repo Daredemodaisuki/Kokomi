@@ -239,8 +239,8 @@ class OceanHuedClam:
         self.id_list.append(directive_id)
         return self
 
-    def in_bbox(self, e: str, n: str, s: str, w: str) -> 'OceanHuedClam':
-        self.bbox_dict = {"E": e, "N": n, "S": s, "W": w}
+    def in_bbox(self, e: str, w: str, s: str, n: str) -> 'OceanHuedClam':
+        self.bbox_dict = {"E": e, "W": w, "S": s, "N": n}
         return self
 
     # 递归：查询主体语句“xx.y[]();”完了之后的“>;”、“<;”，必须依赖主体语句，所以maintype肯定有
@@ -258,17 +258,18 @@ class OceanHuedClam:
                     directive_type = self.jellyfish_dict[jellyfish_used].OceanHuedClam.main_type
                 # rw下，n上，其他的报错
                 if directive_type == ("relation" or "way"):
-                    self.recurse_dict.update({"_": "down"})
+                    # "jellyfish_used": jellyfish.name, "direction":
+                    self.recurse_dict.update({"jellyfish_used": "_", "direction": "down"})
                     print(
                         "WARN: The recurse direction is automatically set as \"down\".\n警告：递归方向自动设置为下行。\n")
                 elif directive_type == "node":
-                    self.recurse_dict.update({"_": "up"})
+                    self.recurse_dict.update({"jellyfish_used": "_", "direction": "up"})
                     print("WARN: The recurse direction is automatically set as \"up\".\n警告：递归方向自动设置为上行。\n")
                 else:
                     print("ERROR: Recurse direction need.\n错误的：必须指定递归方向。\n")
             else:
                 if direction in ["up", "down", "up_to_relation", "down_from_relation"]:
-                    self.recurse_dict.update({jellyfish_used: direction})
+                    self.recurse_dict.update({"jellyfish_used": jellyfish_used, "direction": direction})
                 else:
                     print("ERROR: Undefined recurse direction.\n错误的：未定义的递归方向。\n")
         else:
@@ -346,13 +347,28 @@ class OceanHuedClam:
             id_info = id_info + ")"
             limit_info = limit_info + id_info
         elif self.bbox_dict != {}:
-            limit_info = limit_info + "(" + self.bbox_dict["E"] + self.bbox_dict["N"] + self.bbox_dict["S"]\
-                         + self.bbox_dict["W"] + ")"
+            limit_info = limit_info + "(" + self.bbox_dict["S"] + "," + self.bbox_dict["W"] + "," + self.bbox_dict["N"]\
+                         + "," + self.bbox_dict["E"] + ")"
         limit_info = limit_info + ";"
         # self.text = limit_info + ";"
         # return self.text
         # TODO：开始处理递归
-
+        if self.recurse_dict != {}:
+            recurse_info = ""
+            if self.recurse_dict["jellyfish_used"] != "_":
+                recurse_info = "." + self.recurse_dict["name"]
+            match self.recurse_dict["direction"]:
+                case "up":
+                    recurse_info = recurse_info + "<;"
+                case "down":
+                    recurse_info = recurse_info + ">;"
+                case "up_to_relation":
+                    recurse_info = recurse_info + "<<;"
+                case "down_from_relation":
+                    recurse_info = recurse_info + ">>;"
+                case _:
+                    recurse_info = ""
+            limit_info = limit_info + recurse_info
         return limit_info
 
     # 获取该海染砗磲（QL语句）中的查询语段

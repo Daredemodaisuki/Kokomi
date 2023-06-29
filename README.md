@@ -13,4 +13,4 @@
 
 ## N+1 已知的问题
 
-+ Kokomi手撸xml不能识别没有tag的节点。
++ <del>Kokomi手撸xml不能识别没有tag的节点。</del>

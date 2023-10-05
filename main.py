@@ -1,5 +1,6 @@
 import requests
 
+# TODO:get_this_text需要重新理，要按照type.A[x](y);>; -> B;的顺序和结构去整理
 
 # Kokomi类：
 #   用于做查询和整理工作的Kokomi在这里。
@@ -216,7 +217,7 @@ class OceanHuedClam:
         self.bbox_dict = {}  # 限制边界
         self.jellyfish_dict = {}  # 要素集字典
         self.jellyfish_use = "_"
-        self.recurse_dict = {}  # 递归字典
+        self.recurse_dict = {}  # 一般递归字典
         self.text = ""  # 局部限定文本
 
     # 海染砗磲（QL语句）之键值关系限制语句：限定查询主体的key与value。
@@ -249,11 +250,10 @@ class OceanHuedClam:
         return self
 
     # 递归：查询主体语句“xx.y[]();”完了之后的“>;”、“<;”，必须依赖主体语句，所以maintype肯定有
-    def recurse(self, jellyfish: str = "", direction: str = "") -> 'OceanHuedClam':
+    def recurse(self, jellyfish: str = "", direction: str = "", min: str = "", max: str = "min") -> 'OceanHuedClam':
         jellyfish_used = jellyfish
         if jellyfish_used == "":
             jellyfish_used = self.jellyfish_use
-
         if (jellyfish_used == "_") or (jellyfish_used in self.jellyfish_dict):
             if direction == "":
                 # 如果没填方向就看下本句话或者要用的集合里面的那句话的要素类型。
@@ -273,14 +273,25 @@ class OceanHuedClam:
                 else:
                     print("ERROR: Recurse direction need.\n错误的：必须指定递归方向。\n")
             else:
+                # 一般递归模式
                 if direction in ["up", "down", "up_to_relation", "down_from_relation"]:
-                    self.recurse_dict.update({"jellyfish_used": jellyfish_used, "direction": direction})
+                    self.recurse_dict.update({"type": "A", "jellyfish_used": jellyfish_used, "direction": direction})
+                # “on_way”（在几条线上的点）“linked_on”（连几个其他点的点）模式
+                elif direction in ["on_way", "linked_on"]:
+                    if self.main_type == "node":
+                        self.recurse_dict.update({"type": "B", "jellyfish_used": jellyfish_used, "direction": direction})
+                        # TODO
+                    else:
+                        print("ERROR: The direction can not be \"on_way\" or \"linked_on\" for way or relation.\n"
+                              "错误的：节点以外，不可以使用“on_way”“linked_on”模式。\n")
                 else:
                     print("ERROR: Undefined recurse direction.\n错误的：未定义的递归方向。\n")
         else:
             print("ERROR: Non-imported jellyfish(set).\n错误的：使用没有引用的水母（要素集）。\n")
 
         return self
+
+    # def around(self, ):
 
     # 引用水母（要素集）：将水母引入海染砗磲（QL语句），海染砗磲可以指定限定范围为被引用的水母之一。
     #   参数1为【水母, Jellyfish】：欲引用的水母。
@@ -361,7 +372,7 @@ class OceanHuedClam:
         if self.recurse_dict != {}:
             recurse_info = ""
             if self.recurse_dict["jellyfish_used"] != "_":
-                recurse_info = "." + self.recurse_dict["name"]
+                recurse_info = "." + self.recurse_dict["jellyfish_used"]
             match self.recurse_dict["direction"]:
                 case "up":
                     recurse_info = recurse_info + "<;"

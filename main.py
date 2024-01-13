@@ -1,9 +1,11 @@
 import requests
+import copy
+# TODO:get_this_text需要重新理，要按照type.A(other_condition)[k_v](if)->.B;>;的顺序和结构去整理
+# TODO:不需要改变输入输出集时只需要一句话，需要怎么判断？
+# TODO:潜在的extend和append使用错误
+# https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL
 
-# TODO:get_this_text需要重新理，要按照type.A[x](y);>; -> B;的顺序和结构去整理
 
-# Kokomi类：
-#   用于做查询和整理工作的Kokomi在这里。
 class Kokomi:
     def __init__(self):
         self.energy = 50
@@ -205,20 +207,17 @@ class Kokomi:
             return {}
 
 
-# 海染砗磲类（QL语句）类：
-#   一个海染砗磲对象即一句话，其可用于修饰水母（要素集）或者直接限定核心查询内容。
+# 海染砗磲（QL语句）：查询要素的条件，条件取上名称后就代表符合该条件的要素集。
 class OceanHuedClam:
-    def __init__(self, directive_type: str, if_this_main: int = 1):
-        self.if_main = if_this_main  # 是否为最主体（暂时未用）
-        self.main_type = directive_type  # 查询的 主 体 要素类型
-        self.time = "100"
-        self.k_v_dict = {}  # 限制信息字典
-        self.id_list = []  # 限制ID
-        self.bbox_dict = {}  # 限制边界
-        self.jellyfish_dict = {}  # 要素集字典
-        self.jellyfish_use = "_"
-        self.recurse_dict = {}  # 一般递归字典
-        self.text = ""  # 局部限定文本
+    def __init__(self, nwr_type: str):
+        self.__include_dict = {}
+        self.__from_OceanHuedClam_list = []  # or列表，列表元素若是列表，则其为and
+        self.__main_type = nwr_type
+        self.__kv_dict = {}
+        self.__around_dict = {}
+        self.__global_bbox_list = []  # 南、西、北、东
+        self.__id_dict = {}
+        self.__located_in_list = []
 
     # 海染砗磲（QL语句）之键值关系限制语句：限定查询主体的key与value。
     #   参数1为【限定键】：限定必须出现或有对应值要求的键；
@@ -235,103 +234,234 @@ class OceanHuedClam:
                 print("ERROR: Value needed except exist and !exist.\n错误的：除exist、!exist条件外需要键的值。\n")
                 return self
             else:
-                self.k_v_dict.update({key: {"value": value, "relation": relation}})
+                self.__kv_dict.update({key: {"value": value, "relation": relation}})
                 return self
         else:
             print("ERROR: Undefined key-value relation.\n错误的：未定义的键值关系。\n")
             return self
 
-    def id(self, directive_id: str) -> 'OceanHuedClam':
-        self.id_list.append(directive_id)
-        return self
-
-    def in_bbox(self, e: str, w: str, s: str, n: str) -> 'OceanHuedClam':
-        self.bbox_dict = {"E": e, "W": w, "S": s, "N": n}
-        return self
-
-    # 递归：查询主体语句“xx.y[]();”完了之后的“>;”、“<;”，必须依赖主体语句，所以maintype肯定有
-    def recurse(self, jellyfish: str = "", direction: str = "", min: str = "", max: str = "min") -> 'OceanHuedClam':
-        jellyfish_used = jellyfish
-        if jellyfish_used == "":
-            jellyfish_used = self.jellyfish_use
-        if (jellyfish_used == "_") or (jellyfish_used in self.jellyfish_dict):
-            if direction == "":
-                # 如果没填方向就看下本句话或者要用的集合里面的那句话的要素类型。
-                if jellyfish_used == "_":
-                    directive_type = self.main_type
-                else:
-                    directive_type = self.jellyfish_dict[jellyfish_used].OceanHuedClam.main_type
-                # rw下，n上，其他的报错
-                if directive_type == ("relation" or "way"):
-                    # "jellyfish_used": jellyfish.name, "direction":
-                    self.recurse_dict.update({"jellyfish_used": "_", "direction": "down"})
-                    print(
-                        "WARN: The recurse direction is automatically set as \"down\".\n警告：递归方向自动设置为下行。\n")
-                elif directive_type == "node":
-                    self.recurse_dict.update({"jellyfish_used": "_", "direction": "up"})
-                    print("WARN: The recurse direction is automatically set as \"up\".\n警告：递归方向自动设置为上行。\n")
-                else:
-                    print("ERROR: Recurse direction need.\n错误的：必须指定递归方向。\n")
+    def around(self, set_point: (str or dict), r: int) -> 'OceanHuedClam':
+        # 要素集合
+        if isinstance(set_point, str):
+            if (set_point not in self.__include_dict) and (set_point != "_"):
+                print("ERROR: Not-included OceanHuedClam " + set_point + ".\n"
+                      "错误的：找不到「海染砗磲」“" + set_point + "”。\n")
             else:
-                # 一般递归模式
-                if direction in ["up", "down", "up_to_relation", "down_from_relation"]:
-                    self.recurse_dict.update({"type": "A", "jellyfish_used": jellyfish_used, "direction": direction})
-                # “on_way”（在几条线上的点）“linked_on”（连几个其他点的点）模式
-                elif direction in ["on_way", "linked_on"]:
-                    if self.main_type == "node":
-                        self.recurse_dict.update({"type": "B", "jellyfish_used": jellyfish_used, "direction": direction})
-                        # TODO
-                    else:
-                        print("ERROR: The direction can not be \"on_way\" or \"linked_on\" for way or relation.\n"
-                              "错误的：节点以外，不可以使用“on_way”“linked_on”模式。\n")
-                else:
-                    print("ERROR: Undefined recurse direction.\n错误的：未定义的递归方向。\n")
+                self.__around_dict = {set_point: r}
+        # 点串线
         else:
-            print("ERROR: Non-imported jellyfish(set).\n错误的：使用没有引用的水母（要素集）。\n")
-
-        return self
-
-    # def around(self, ):
-
-    # 引用水母（要素集）：将水母引入海染砗磲（QL语句），海染砗磲可以指定限定范围为被引用的水母之一。
-    #   参数1为【水母, Jellyfish】：欲引用的水母。
-    # 返回OceanHuedClam：
-    #   如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。
-    def import_jellyfish(self, jellyfish: 'Jellyfish') -> 'OceanHuedClam':
-        self.jellyfish_dict.update({jellyfish.name: jellyfish})
-        return self
-
-    # 指定海染砗磲（QL语句）的查询限定范围：指定该海染砗磲仅在特定水母（要素集）内查询。
-    #   参数1为【水母名称, str】：欲使用的水母的名称。
-    # 返回OceanHuedClam：
-    #   如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。
-    # TODO：考虑和import合并？
-    def in_jellyfish(self, jellyfish_name: str):
-        for jellyfish in self.jellyfish_dict:
-            if self.jellyfish_dict[jellyfish].name == jellyfish_name:
-                self.jellyfish_use = jellyfish_name
+            if len(set_point) % 2 != 0:
+                print(
+                    "ERROR: Lat/lon-s not in pairs.\n错误的：传入的点串线坐标[纬度1, 经度1, 纬度2, 经度2, ...]不成对。\n")
             else:
-                print("ERROR: Non-imported jellyfish(set).\n错误的：使用没有引用的水母（要素集）。\n")
+                self.__around_dict = {r: set_point}
         return self
 
-    # 指定海染砗磲（QL语句）的查询最大等待时间。
-    #   参数1为【等待时间, str】：本次查询的最大等待时间，仅需要在最终的、最核心的海染砗磲中设定，get_full_text函数会将时间写在最前面。
-    # 返回OceanHuedClam：
-    #   如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。
-    def timeout(self, time: str) -> 'OceanHuedClam':
-        self.time = time
+    # str = or，list = 多个and
+    def set_from(self, set_name: (str or list)) -> 'OceanHuedClam':
+        if isinstance(set_name, str):
+            if (set_name in self.__include_dict) or (set_name == "_"):
+                self.__from_OceanHuedClam_list.append(set_name)
+            else:
+                print("ERROR: Not-included OceanHuedClam " + set_name + ".\n错误的：找不到「海染砗磲」“" + set_name + "”。\n")
+        else:
+            and_list = []
+            for x in set_name:
+                if isinstance(x, str):
+                    if (x in self.__include_dict) or (x == "_"):
+                        and_list.append(x)
+                    else:
+                        print("ERROR: Not-included OceanHuedClam " + set_name + ".\n"
+                              "错误的：找不到「海染砗磲」“" + set_name + "”。\n")
+                else:
+                    print("ERROR: List not made up with str.\n错误的：传入列表包含非字符串元素。\n")
+            if len(and_list) > 0:
+                self.__from_OceanHuedClam_list.append(and_list)
+                # print(self.__from_OceanHuedClam_list)
         return self
 
-    # 获取该海染砗磲（QL语句）中的局部查询语句
-    # 返回str：
-    #   返回该海染砗磲中关于键值关系、id限定、局部界定框限制的语句。如：“["name"~"郁州"](id="xxx");”。
-    #   TODO：id限定、局部界定框限制（圆括号部分）
-    def get_this_text(self) -> str:
+    def set_bbox(self, E: int, S: int, W: int, N: int) -> 'OceanHuedClam':
+        self.__global_bbox_list = [S, W, N, E]
+        return self
+
+    def id(self, directive_id: (int or str or list), id_opreation: str = "=") -> 'OceanHuedClam':
+        if isinstance(directive_id, list):
+            for x in range(len(directive_id)):
+                self.__id_dict.update({str(directive_id[x]): id_opreation})
+        else:
+            self.__id_dict.update({str(directive_id): id_opreation})
+        return self
+
+    # 在多边形中
+    def located_in(self, poly_list: list) -> 'OceanHuedClam':
+        if len(poly_list) % 2 != 0:
+            print("ERROR: Lat/lon-s not in pairs.\n错误的：传入的多边形坐标[纬度1, 经度1, 纬度2, 经度2, ...]不成对。\n")
+        else:
+            self.__located_in_list = poly_list
+        return self
+
+    def include_OceanHuedClam(self, set_name: str, the_set: 'OceanHuedClam') -> 'OceanHuedClam':
+        if set_name in self.__include_dict:
+            print("WARN: OceanHuedClam with the same name " + set_name + " has been included and will be replaced.\n"
+                  "警示意义的：同名「海染砗磲」“" + set_name + "”已存在，将被替换。")
+        self.__include_dict.update({set_name: the_set})
+        print("INFO: OceanHuedClam " + set_name + " is included.\n信息：「海染砗磲」“" + set_name + "”已装备。\n")
+        return self
+
+    # TODO:判断要几个查询，并把要查询的内容返回出去，以便外部查询，step=已经进行了几步，不重复执行
+    def how_many_query(self, step: int = 0) -> list:
+        # TODO:添加flag_dict以便Kokomi本地筛选
+        query_list = []
+        # id是否需要多次查询：如果又有等号也有><，则><部分不索引id，下载完后交给Kokomi筛选
+        if step == 0:
+            if self.__id_dict:
+                id_eq = []
+                id_big = []
+                id_sml = []  # 不能连等
+                for directive_id in self.__id_dict:
+                    match self.__id_dict[directive_id]:
+                        case "=":
+                            id_eq.append(directive_id)
+                        case ">":
+                            id_big.append(directive_id)
+                        case "<":
+                            id_sml.append(directive_id)
+                        case _:
+                            id_eq.append(directive_id)
+                if len(id_eq) > 0:
+                    sub_OceanHuedClam_eq = copy.deepcopy(self)
+                    new_id_dict = {}
+                    for x in id_eq:
+                        new_id_dict.update({x: "="})
+                    sub_OceanHuedClam_eq.__id_dict = new_id_dict
+                    query_list.extend(sub_OceanHuedClam_eq.how_many_query(1))
+                if len(id_big) > 0:
+                    sub_OceanHuedClam_big = copy.deepcopy(self)
+                    new_id_dict = {}
+                    for x in id_big:
+                        new_id_dict.update({x: ">"})
+                    sub_OceanHuedClam_big.__id_dict = new_id_dict
+                    query_list.extend(sub_OceanHuedClam_big.how_many_query(1))
+                if len(id_sml) > 0:
+                    sub_OceanHuedClam_sml = copy.deepcopy(self)
+                    new_id_dict = {}
+                    for x in id_sml:
+                        new_id_dict.update({x: "<"})
+                    sub_OceanHuedClam_sml.__id_dict = new_id_dict
+                    query_list.extend(sub_OceanHuedClam_sml.how_many_query(1))
+                # print("第0步完成")
+            else:
+                query_list.extend(self.how_many_query(1))
+        # set_from：长度>1就要拆开
+        if step == 1:
+            if len(self.__from_OceanHuedClam_list) > 1:
+                # and交集要合成一个query，or每个自己分别query
+                for from_OceanHuedClam in self.__from_OceanHuedClam_list:
+                    sub_OceanHuedClam_from = copy.deepcopy(self)
+                    sub_OceanHuedClam_from.__from_OceanHuedClam_list = [from_OceanHuedClam]
+                    query_list.extend(sub_OceanHuedClam_from.how_many_query(2))
+                    '''if isinstance(from_OceanHuedClam, list):  # and
+                        sub_OceanHuedClam_from_and = copy.deepcopy(self)
+                        sub_OceanHuedClam_from_and.__from_OceanHuedClam_list = from_OceanHuedClam
+                        query_list.extend(sub_OceanHuedClam_from_and.how_many_query(2))
+                    else:  # or
+                        sub_OceanHuedClam_from_or = copy.deepcopy(self)
+                        sub_OceanHuedClam_from_or.__from_OceanHuedClam_list = from_OceanHuedClam
+                        query_list.extend(sub_OceanHuedClam_from_or.how_many_query(2))'''
+            else:
+                query_list.extend(self.how_many_query(2))
+                # print("第1步完成")
+        if step == 2:  # 最后一步
+            query_list.append(self)
+        return query_list
+
+    # 仅在输出时指定的要素集名称（"...->.set_name"）；有引用的情况下，输出本「海染砗磲」时可在声明引用阶段一层一层往回带；
+    def convert(self, set_name: str = "", if_main: bool = True, outputed_list=None) -> str:
+        # 如果这个是主语句，最外层的，那么outputed列表应该清空
+        if outputed_list is None:
+            outputed_list = []
+        result = ""
+        # 处理引用
+        outputed = outputed_list
+        for include in self.__include_dict:
+            # 先把引用的"...->.set_name;"输出了，后使用set_name时名称就是一致的，然后内容也对的上（递归）
+            # 如果事先已经打印了，就不重复打印，防止A->B;A,B->C中打印两次A
+            if include not in outputed:
+                result += self.__include_dict[include].convert(include, False, outputed)
+                outputed.append(include)
+                # print("INFO: OceanHuedClam " + include + " is printed.\n信息：所装备的「海染砗磲」“" + include + "”已打印。\n")
+        # 全局界定框
+        if self.__global_bbox_list:
+            if not if_main:
+                # TODO:这个判断需要吗？
+                print("WARN: Bbox in set " + set_name + " is disabled due to it is not the main set in this query.\n"
+                      "警示意义的：因为「海染砗磲」“" + set_name + "”不是最外层语句，其界定框限制不生效。\n")
+            else:
+                bbox_info = "[bbox:"
+                for x in range(3):
+                    bbox_info += str(self.__global_bbox_list[x]) + ","
+                bbox_info += str(self.__global_bbox_list[3]) + "];"
+                result += bbox_info
+        # 类型
+        result += self.__main_type
+        # id（使用=限制）
+        # TODO：如果又有等号也有>< -> 这里不处理了，交给Kokomi本地筛选
+        if self.__id_dict:
+            id_info = ""
+            eq_id_list = []
+            for directive_id in self.__id_dict:
+                if self.__id_dict[directive_id] == "=":
+                    eq_id_list.append(directive_id)
+            if len(eq_id_list) > 0:
+                id_info = "(id:"
+                for x in range(len(eq_id_list) - 1):
+                    id_info += str(eq_id_list[x]) + ","
+                id_info += str(eq_id_list[-1]) + ")"
+            result += id_info
+            # 有id限制时其他无法生效，直接处理集合并结束
+            if set_name != "":
+                result += "->." + set_name
+            print("WARN: When there is id limitation in a OceanHuedClam, other limitations cannot function.\n"
+                  "警示意义的：使用id限定后，其他「海染砗磲」条件无法生效。\n")
+            result += ";"
+            return result
+        # 从集合
+        if self.__from_OceanHuedClam_list:
+            for from_OceanHuedClam in self.__from_OceanHuedClam_list:
+                if isinstance(from_OceanHuedClam, str):
+                    result += "." + from_OceanHuedClam
+                else:
+                    if len(from_OceanHuedClam) > 1:
+                        print("INFO: OceanHuedClam " + (set_name if set_name != "" else "default") +
+                              " uses data from a intersection of multiple OceanHuedClams.\n"
+                              "信息：所装备的「海染砗磲」“" + (set_name if set_name != "" else "全集") +
+                              "”使用了多个其他「海染砗磲」的交集。\n")
+                    for x in from_OceanHuedClam:
+                        result += "." + x
+
+        # around
+        if self.__around_dict:
+            around_info = ""
+            for around in self.__around_dict:
+                if isinstance(around, str):
+                    around_info += "(around." + around + ":" + str(self.__around_dict[around]) + ")"
+                else:
+                    around_info += "(around" + ":" + str(around)
+                    for point in self.__around_dict[around]:
+                        around_info += "," + str(point)
+                    around_info += ")"
+            result += around_info
+        # poly
+        if self.__located_in_list:
+            poly_info = "(poly:\""
+            for x in range(len(self.__located_in_list) - 1):
+                poly_info += str(self.__located_in_list[x]) + " "
+            poly_info += str(self.__located_in_list[len(self.__located_in_list) - 1]) + "\")"
+        # k_v
         limit_info = ""
-        # 开始处理key?value
-        for key in self.k_v_dict:
-            value = self.k_v_dict[key].get("value")
-            match self.k_v_dict[key].get("relation"):
+        for key in self.__kv_dict:
+            value = self.__kv_dict[key].get("value")
+            match self.__kv_dict[key].get("relation"):
                 case "exist":  # 存在key（value可不填）
                     now_info = "[\"" + key + "\"]"
                 case "!exist":  # 不存在key
@@ -352,84 +482,10 @@ class OceanHuedClam:
                     now_info = "[~\"" + key + "\"~\"" + value + "\",i]"
                 case _:
                     now_info = ""
-            limit_info = limit_info + now_info
-        # 处理id和其他限定（方括号后的圆括号部分）
-        if self.id_list:  # != []
-            id_info = "(id:"
-            for i in range(0, len(self.id_list)):
-                id_info = id_info + self.id_list[i]
-                if i < len(self.id_list) - 1:
-                    id_info = id_info + ","
-            id_info = id_info + ")"
-            limit_info = limit_info + id_info
-        elif self.bbox_dict != {}:
-            limit_info = limit_info + "(" + self.bbox_dict["S"] + "," + self.bbox_dict["W"] + "," + self.bbox_dict["N"]\
-                         + "," + self.bbox_dict["E"] + ")"
-        limit_info = limit_info + ";"
-        # self.text = limit_info + ";"
-        # return self.text
-        # TODO：开始处理递归
-        if self.recurse_dict != {}:
-            recurse_info = ""
-            if self.recurse_dict["jellyfish_used"] != "_":
-                recurse_info = "." + self.recurse_dict["jellyfish_used"]
-            match self.recurse_dict["direction"]:
-                case "up":
-                    recurse_info = recurse_info + "<;"
-                case "down":
-                    recurse_info = recurse_info + ">;"
-                case "up_to_relation":
-                    recurse_info = recurse_info + "<<;"
-                case "down_from_relation":
-                    recurse_info = recurse_info + ">>;"
-                case _:
-                    recurse_info = ""
-            limit_info = limit_info + recurse_info
-        return limit_info
-
-    # 获取该海染砗磲（QL语句）中的查询语段
-    # 返回str：
-    #   返回加工后的局部限定语句，比如若该海染砗磲有水母限定，使用水母相关方法添加水母有关语句。如jellyfish_text + “(nwr.a["railway"];)”。
-    def get_semi_full_text(self) -> str:
-        main_type = self.main_type
-        jellyfish_text = ""
-
-        for jellyfish in self.jellyfish_dict:
-            jellyfish_text = jellyfish_text + self.jellyfish_dict[jellyfish].get_this_text()
-        # print("aaa:" + jellyfish_text)
-        if self.jellyfish_use != "_":
-            semi_full_text = jellyfish_text + "(" + main_type + "." + self.jellyfish_use + self.get_this_text() + ")"
-        else:
-            semi_full_text = "(" + main_type + self.get_this_text() + ")"
-        return semi_full_text
-
-    # 获取该海染砗磲（QL语句）的最终查询语句，仅在最终的、最核心的海染砗磲中使用。
-    # 返回str：
-    #   该返回可直接作为API的查询语句，是其“interpreter?”后的部分。
-    #   如：“data=[out:xml][timeout:100];(nwr["name"~"郁"];)->.a;(node.a["railway"];)->.b;
-    #   (way.b["public_transport"]["train"="yes"];);out body;”。
-    def get_full_text(self) -> str:
-        main_type = self.main_type
-        jellyfish_text = ""
-        for jellyfish in self.jellyfish_dict:
-            jellyfish_text = jellyfish_text + self.jellyfish_dict[jellyfish].get_this_text()
-        if self.jellyfish_use != "_":
-            full_text = "data=[out:xml][timeout:" + self.time + "];" + self.get_semi_full_text() + ";out body;"
-        else:
-            full_text = "data=[out:xml][timeout:" + self.time + "];" + self.get_semi_full_text() + ";out body;"
-        return full_text
-
-
-# 水母（要素集）类：
-#   做好用于修饰水母的海染砗磲（QL语句）可将该海染砗磲加给水母，水母中可查询到的内容一定符合海染砗磲的规定。
-#   注意：一般水母和海染砗磲是交替使用的，水母用于指定海染砗磲的查询范围（在水母中），海染砗磲用于修饰水母中的内容要求。
-class Jellyfish:
-    def __init__(self, name: str, OHC: 'OceanHuedClam'):
-        self.name = name
-        self.OceanHuedClam = OHC
-
-    # 获取该水母（要素集）的海染砗磲（QL语句）的查询语段，一般在下一级的海染砗磲中调用以说明下一级的海染砗磲的查询范围将被限制在这个水母中。
-    # 返回str：
-    #   返回该水母在修饰其的海染砗磲的限制下的海染砗磲查询语段，如“(nwr["name"~"郁州"];)->.a;”。
-    def get_this_text(self) -> str:
-        return self.OceanHuedClam.get_semi_full_text() + "->." + self.name + ";"
+            limit_info += now_info
+        result += limit_info
+        # 处理集合并结束
+        if set_name != "":
+            result += "->." + set_name
+        result += ";"
+        return result

@@ -6,11 +6,10 @@
 from src.Kokomi.main import Kokomi
 ```
 
-### 2.当然请不要忘记带上她心爱的海染砗磲【OceanHuedClam（QL语句）】和水母【Jellyfish（要素集）】：
+### 2.当然请不要忘记带上她心爱的海染砗磲【OceanHuedClam（QL语句）】和：
 
 ```python
 from src.Kokomi.main import OceanHuedClam
-from src.Kokomi.main import Jellyfish
 ```
 
 ℹ 这是现阶段的，后续合并了就只用 import Kokomi 了。

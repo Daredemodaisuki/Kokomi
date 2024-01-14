@@ -4,6 +4,10 @@
   
   A python-based Overpass QL "translator" and Overpass querier.
 
+  文档：
++ [→ 开始 · Kokomi基本内容](https://github.com/Daredemodaisuki/Kokomi/blob/main/docs/1%20-%20To%20start%20and%20invite%20Kokomi.md)
++ [→ 海染砗磲 · 查询语句基础](https://github.com/Daredemodaisuki/Kokomi/blob/main/docs/2%20-%20QL%20with%20OceanHuedClam.md)
+
 ## N 一些应用场景示例
 
 + 我想查询一些地名，做一个词库，方便调教输入法；

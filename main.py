@@ -140,7 +140,7 @@ class Kokomi:
     # 锦囊（要素）报文分割：将指定类型每个要素的信息切开，放入dict中。
     #   参数1为【锦囊类型】（"node"、"way"、"relation"）：应当是点、线、关系的一种；
     #   参数2为【欲切割报文】：需要处理的报文，默认为空。
-    # 返回dict：
+    # 返回dict，其中：
     #   {锦囊ID: {
     #       "type": 锦囊类型,
     #       "tag_dict": {键名: 值, ...},
@@ -242,9 +242,9 @@ class OceanHuedClam:
         self.__located_in_list = []
 
     # 海染砗磲（QL语句）之键值关系限制语句：限定查询主体的key与value。
-    #   参数1为【限定键】：限定必须出现或有对应值要求的键；
-    #   参数2为【限制关系】（"exist"、"!exist"、"="、"!="、"=!="、"v-reg"、"!v-reg"、"kv-reg"、"v-Aa_no_care"）：限定键值之间的关系；
-    #   参数3为【限定值】：对限定键的值的要求
+    #   参数1为【限定键，str】：限定必须出现或有对应值要求的键；
+    #   参数2为【限制关系，str】（"exist"、"!exist"、"="、"!="、"=!="、"v-reg"、"!v-reg"、"kv-reg"、"v-Aa_no_care"）：限定键值之间的关系；
+    #   参数3为【限定值，str】：对限定键的值的要求，默认为空str
     # 返回OceanHuedClam：
     #   如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。
     def key_value(self, key: str, relation: str, value: str = "") -> 'OceanHuedClam':
@@ -262,7 +262,16 @@ class OceanHuedClam:
             print("ERROR: Undefined key-value relation.\n错误的：未定义的键值关系。\n")
             return self
 
-    def around(self, set_point: (str or dict), r: int) -> 'OceanHuedClam':
+    # 海染砗磲（QL语句）之周边检索：查询特定锦囊（要素）周边指定半径的内容。
+    #   参数1为【中心锦囊（要素），str或list】：检索周边的圆心：
+    #       str：中心锦囊集（要素集）的名称，将检索其中各锦囊（要素）周边指定半径的内容；
+    #       list：由一串经纬度对组成的偶数项列表，形如[纬度1, 经度1, 纬度2, 经度2, ...]，表示各经纬度对组成的点构成的线段，将检索其周边指定半径的内容，其中：
+    #           第2n-1项为float、int或str：第n个点的纬度；
+    #           第2n项为float、int或str：第n个点的经度；
+    #   参数2为【半径，int】：周边检索的半径，单位为米；
+    # 返回OceanHuedClam：
+    #   如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。
+    def around(self, set_point: (str or list), r: int) -> 'OceanHuedClam':
         # 要素集合
         if isinstance(set_point, str):
             if (set_point not in self.__include_dict) and (set_point != "_"):
@@ -279,7 +288,14 @@ class OceanHuedClam:
                 self.__around_dict = {r: set_point}
         return self
 
-    # str = or，list = 多个and
+    # 海染砗磲（QL语句）之从海染砗磲（QL语句）提取：从满足其他海染砗磲（QL语句）的内容中进一步查询。
+    #   参数1为【中心锦囊（要素），str或list】：海染砗磲（QL语句）：
+    #       str：或查询（并集），单次使用本方法时输入一个集合，通过连续使用数次本方法达到从多个海染砗磲（QL语句）的并集提取；
+    #       list：和查询（交集），由数个海染砗磲（QL语句）名称组成的列表，列表内的海染砗磲（QL语句）需要同时满足，呈交集；
+    #             输入的列表与其他使用本方法输入的海染砗磲（QL语句）呈并集，其中：
+    #           每一项均为str：需要同时满足的海染砗磲（QL语句）名称；
+    # 返回OceanHuedClam：
+    #   如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。
     def set_from(self, set_name: (str or list)) -> 'OceanHuedClam':
         if isinstance(set_name, str):
             if (set_name in self.__include_dict) or (set_name == "_"):
@@ -471,6 +487,7 @@ class OceanHuedClam:
             if each_query.__around_dict:
                 around_info = ""
                 for around in each_query.__around_dict:
+                    # 要素集{set_point: r}；点串线{r: set_point}
                     if isinstance(around, str):
                         around_info += "(around." + around + ":" + str(each_query.__around_dict[around]) + ")"
                     else:

@@ -334,7 +334,7 @@ class OceanHuedClam:
             self.__id_dict.update({str(directive_id): id_opreation})
         return self
 
-    # 在多边形中
+    # 在多边形中（poly）
     def located_in(self, poly_list: list) -> 'OceanHuedClam':
         if len(poly_list) % 2 != 0:
             print("ERROR: Lat/lon-s not in pairs.\n错误的：传入的多边形坐标[纬度1, 经度1, 纬度2, 经度2, ...]不成对。\n")

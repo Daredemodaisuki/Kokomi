@@ -19,10 +19,11 @@ limit1 = OceanHuedClam("nwr")
 
 ```python
 ① def key_value(self, key: str, relation: str, value: str = "") -> 'OceanHuedClam'
-② def id(self, directive_id: str) -> 'OceanHuedClam'
-③ def in_bbox(self, e: str, n: str, s: str, w: str) -> 'OceanHuedClam'
-④ def recurse(self, jellyfish: str = "", direction: str = "") -> 'OceanHuedClam'
+② def around(self, set_point: (str or list), r: int) -> 'OceanHuedClam'
+③ def id(self, directive_id: (int or str or list), id_opreation: str = "=") -> 'OceanHuedClam'
+④ def set_bbox(self, E: int, S: int, W: int, N: int) -> 'OceanHuedClam'
 ... TODO
+def recurse(self, jellyfish: str = "", direction: str = "") -> 'OceanHuedClam'
 ```
 
 你可能注意到，这些方法都返回新的海染砗磲对象，海染砗磲采用方法链（method chaining）模式，所以使用其的方法是直接将方法追加至现有的海染砗磲（QL语句）后，可以连续追加；这些方法内部也对self的内容进行了修改，所以你可以选择使用一个新的变量来承载追加方法后海染砗磲（QL语句），也可以不用，即下面的示例中limit1和limit2是等价的；此外，派森的赋值只大致算是赋地址，所以即使在limit1变化前将其赋给limit3，limit3在limit1变化后还是与limit1保持等价：
@@ -97,10 +98,26 @@ limit1.key_value("name", "=", "天云峠").key_value("name", "=", "天云山上�
 ["name"="天云山上下"]
 ```
 
-#### ② id方法
+#### ② around方法
+
+此方法查询特定锦囊（要素）周边指定半径的内容。
++ 参数1为【中心锦囊（要素），str或list】：检索周边的圆心：
+       str：中心锦囊集（要素集）的名称，将检索其中各锦囊（要素）周边指定半径的内容；
+       list：由一串经纬度对组成的偶数项列表，形如[纬度1, 经度1, 纬度2, 经度2, ...]，表示各经纬度对组成的点构成的线段，将检索其周边指定半径的内容，其中：
+           第2n-1项为float、int或str：第n个点的纬度；
+           第2n项为float、int或str：第n个点的经度；
++ 参数2为【半径，int】：周边检索的半径，单位为米；
+  返回OceanHuedClam：
++ 如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。
+
+#### ③ id方法
 
 此方法用于限定查询主体的id，id在珊瑚宫（Overpass）上是锦囊（要素）的唯一标识符，限制后每种锦囊（锦囊）只会查询到特定的那一个，所以一般也不用追加其他限定，此方法：
-+ 参数1为【限定id，str】：欲限定的id；
++ 参数1为【中心锦囊（要素），str或list】：海染砗磲（QL语句）：
+       str：或查询（并集），单次使用本方法时输入一个集合，通过连续使用数次本方法达到从多个海染砗磲（QL语句）的并集提取；
+       list：和查询（交集），由数个海染砗磲（QL语句）名称组成的列表，列表内的海染砗磲（QL语句）需要同时满足，呈交集；
+             输入的列表与其他使用本方法输入的海染砗磲（QL语句）呈并集，其中：
+           每一项均为str：需要同时满足的海染砗磲（QL语句）名称；
 
   返回OceanHuedClam：
 + 如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。
@@ -108,7 +125,7 @@ limit1.key_value("name", "=", "天云峠").key_value("name", "=", "天云山上�
 示例：查询ID为114514的点：
 
 ```python
-limit1 = OceanHuedClam("node").id("114514")
+limit1 = OceanHuedClam("node").id(114514)
 ```
 
 其相当于QL中的：
@@ -117,12 +134,12 @@ limit1 = OceanHuedClam("node").id("114514")
 node(id:114514);
 ```
 
-#### ③ in_bbox方法
+#### ④ in_bbox方法
 
 此方法用于限定查询主体的位置，将会按经纬度构造一个界定框，锦囊（要素）不论是点、线、关系（包括其下的点、线），只要擦进了界定框就算满足条件，此方法：
 + 参数1为【东至，str】：欲限定的界定框的东边界的十进制经度；
-+ 参数2为【西至，str】：欲限定的界定框的西边界的十进制经度；
-+ 参数3为【南至，str】：欲限定的界定框的南边界的十进制纬度；
++ 参数2为【南至，str】：欲限定的界定框的南边界的十进制经度；
++ 参数3为【西至，str】：欲限定的界定框的西边界的十进制纬度；
 + 参数4为【北至，str】：欲限定的界定框的北边界的十进制纬度；
 
   返回OceanHuedClam：

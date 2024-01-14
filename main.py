@@ -355,137 +355,144 @@ class OceanHuedClam:
         # set_from：长度>1就要拆开
         if step == 1:
             if len(self.__from_OceanHuedClam_list) > 1:
-                # and交集要合成一个query，or每个自己分别query
+                # and交集要合成一个query，or每个自己分别query：[A, B, [C,D]] = A ∪ B ∪ (C ∩ D)
                 for from_OceanHuedClam in self.__from_OceanHuedClam_list:
                     sub_OceanHuedClam_from = copy.deepcopy(self)
                     sub_OceanHuedClam_from.__from_OceanHuedClam_list = [from_OceanHuedClam]
                     query_list.extend(sub_OceanHuedClam_from.how_many_query(2))
-                    '''if isinstance(from_OceanHuedClam, list):  # and
-                        sub_OceanHuedClam_from_and = copy.deepcopy(self)
-                        sub_OceanHuedClam_from_and.__from_OceanHuedClam_list = from_OceanHuedClam
-                        query_list.extend(sub_OceanHuedClam_from_and.how_many_query(2))
-                    else:  # or
-                        sub_OceanHuedClam_from_or = copy.deepcopy(self)
-                        sub_OceanHuedClam_from_or.__from_OceanHuedClam_list = from_OceanHuedClam
-                        query_list.extend(sub_OceanHuedClam_from_or.how_many_query(2))'''
             else:
                 query_list.extend(self.how_many_query(2))
                 # print("第1步完成")
-        if step == 2:  # 最后一步
+        if step == 2:  # 目前是最后一步
             query_list.append(self)
         return query_list
 
     # 仅在输出时指定的要素集名称（"...->.set_name"）；有引用的情况下，输出本「海染砗磲」时可在声明引用阶段一层一层往回带；
-    def convert(self, set_name: str = "", if_main: bool = True, outputed_list=None) -> str:
+    # 输出QL语句列表
+    def convert(self, set_name: str = "", if_main: bool = True, outputed_list=None) -> list:
         # 如果这个是主语句，最外层的，那么outputed列表应该清空
         if outputed_list is None:
             outputed_list = []
         result = ""
-        # 处理引用
+        # 预先处理引用
+        # TODO:引用部分能不能只输出后面用了的？
+        include_info = ""
         outputed = outputed_list
         for include in self.__include_dict:
             # 先把引用的"...->.set_name;"输出了，后使用set_name时名称就是一致的，然后内容也对的上（递归）
             # 如果事先已经打印了，就不重复打印，防止A->B;A,B->C中打印两次A
             if include not in outputed:
-                result += self.__include_dict[include].convert(include, False, outputed)
+                # TODO:converted_list = ...；暂时先全部放一起，前置条件要不要分开怎么分开再想想
+                for x in self.__include_dict[include].convert(include, False, outputed):
+                    include_info += x
+                # 合并how_many_query()至convert前：result += self.__include_dict[include].convert(include, False, outputed)
                 outputed.append(include)
                 # print("INFO: OceanHuedClam " + include + " is printed.\n信息：所装备的「海染砗磲」“" + include + "”已打印。\n")
-        # 全局界定框
-        if self.__global_bbox_list:
-            if not if_main:
-                # TODO:这个判断需要吗？
-                print("WARN: Bbox in set " + set_name + " is disabled due to it is not the main set in this query.\n"
-                      "警示意义的：因为「海染砗磲」“" + set_name + "”不是最外层语句，其界定框限制不生效。\n")
-            else:
-                bbox_info = "[bbox:"
-                for x in range(3):
-                    bbox_info += str(self.__global_bbox_list[x]) + ","
-                bbox_info += str(self.__global_bbox_list[3]) + "];"
-                result += bbox_info
-        # 类型
-        result += self.__main_type
-        # id（使用=限制）
-        # TODO：如果又有等号也有>< -> 这里不处理了，交给Kokomi本地筛选
-        if self.__id_dict:
-            id_info = ""
-            eq_id_list = []
-            for directive_id in self.__id_dict:
-                if self.__id_dict[directive_id] == "=":
-                    eq_id_list.append(directive_id)
-            if len(eq_id_list) > 0:
-                id_info = "(id:"
-                for x in range(len(eq_id_list) - 1):
-                    id_info += str(eq_id_list[x]) + ","
-                id_info += str(eq_id_list[-1]) + ")"
-            result += id_info
-            # 有id限制时其他无法生效，直接处理集合并结束
+        # 正式数据开始：先how_many_query()确定要几次查询
+        query_list = self.how_many_query()
+        result_list = []
+        for each_query in query_list:
+            # 每次都重置为只有include信息的，否则原来写在上面for循环之后只执行一次的话输出的内容会重复：
+            # 就像这样：第一次查询include_info;node.A["name"]; 第二次include_info;node.A["name"];node.B["name"];
+            result = include_info
+            # 全局界定框
+            if each_query.__global_bbox_list:
+                if not if_main:
+                    # TODO:这个判断需要吗？
+                    print(
+                        "WARN: Bbox in set " + set_name + " is disabled due to it is not the main set in this query.\n"
+                        "警示意义的：因为「海染砗磲」“" + set_name + "”不是最外层语句，其界定框限制不生效。\n")
+                else:
+                    bbox_info = "[bbox:"
+                    for x in range(3):
+                        bbox_info += str(each_query.__global_bbox_list[x]) + ","
+                    bbox_info += str(each_query.__global_bbox_list[3]) + "];"
+                    result += bbox_info
+            # 类型
+            result += each_query.__main_type
+            # id（使用「=」限制）
+            # TODO：如果又有等号也有>< -> 这里不处理了，交给Kokomi本地筛选，预留flag位
+            if each_query.__id_dict:
+                id_info = ""
+                eq_id_list = []
+                for directive_id in each_query.__id_dict:
+                    if each_query.__id_dict[directive_id] == "=":
+                        eq_id_list.append(directive_id)
+                if len(eq_id_list) > 0:
+                    id_info = "(id:"
+                    for x in range(len(eq_id_list) - 1):
+                        id_info += str(eq_id_list[x]) + ","
+                    id_info += str(eq_id_list[-1]) + ")"
+                result += id_info
+                # 有id限制时其他无法生效，直接处理集合并结束
+                if set_name != "":
+                    result += "->." + set_name
+                print("WARN: When there is id limitation in a OceanHuedClam, other limitations cannot function.\n"
+                      "警示意义的：使用id限定后，其他「海染砗磲」条件无法生效。\n")
+                result += ";"
+                result_list.append(result)
+                continue
+            # .from_other_set
+            if each_query.__from_OceanHuedClam_list:
+                for from_OceanHuedClam in each_query.__from_OceanHuedClam_list:
+                    if isinstance(from_OceanHuedClam, str):
+                        result += "." + from_OceanHuedClam
+                    else:
+                        if len(from_OceanHuedClam) > 1:
+                            print("INFO: OceanHuedClam " + (set_name if set_name != "" else "default") +
+                                  " uses data from a intersection of multiple OceanHuedClams.\n"
+                                  "信息：所装备的「海染砗磲」“" + (set_name if set_name != "" else "全集") +
+                                  "”使用了多个其他「海染砗磲」的交集。\n")
+                        for x in from_OceanHuedClam:
+                            result += "." + x
+            # around
+            if each_query.__around_dict:
+                around_info = ""
+                for around in each_query.__around_dict:
+                    if isinstance(around, str):
+                        around_info += "(around." + around + ":" + str(each_query.__around_dict[around]) + ")"
+                    else:
+                        around_info += "(around" + ":" + str(around)
+                        for point in each_query.__around_dict[around]:
+                            around_info += "," + str(point)
+                        around_info += ")"
+                result += around_info
+            # poly
+            if each_query.__located_in_list:
+                poly_info = "(poly:\""
+                for x in range(len(each_query.__located_in_list) - 1):
+                    poly_info += str(each_query.__located_in_list[x]) + " "
+                poly_info += str(each_query.__located_in_list[len(each_query.__located_in_list) - 1]) + "\")"
+            # k_v
+            limit_info = ""
+            for key in each_query.__kv_dict:
+                value = each_query.__kv_dict[key].get("value")
+                match each_query.__kv_dict[key].get("relation"):
+                    case "exist":  # 存在key（value可不填）
+                        now_info = "[\"" + key + "\"]"
+                    case "!exist":  # 不存在key
+                        now_info = "[!\"" + key + "\"]"
+                    case "=":  # 存在key且对应value匹配
+                        now_info = "[\"" + key + "\"" + "=\"" + value + "\"]"
+                    case "!=":  # 存在key但对应value不匹配 或 不存在key
+                        now_info = "[\"" + key + "\"" + "!=\"" + value + "\"]"
+                    case "=!=":  # 必须存在key但对应value不匹配
+                        now_info = "[\"" + key + "\"][\"" + key + "\"!=\"" + value + "\"]"
+                    case "v-reg":  # v可含正则表达式
+                        now_info = "[\"" + key + "\"~\"" + value + "\"]"
+                    case "!v-reg":  # v可含正则表达式但不匹配
+                        now_info = "[\"" + key + "\"!~\"" + value + "\"]"
+                    case "kv-reg":  # kv皆可含正则表达式
+                        now_info = "[~\"" + key + "\"~\"" + value + "\"]"
+                    case "v-Aa_no_care":  # v可含正则表达式且不分大小写
+                        now_info = "[~\"" + key + "\"~\"" + value + "\",i]"
+                    case _:
+                        now_info = ""
+                limit_info += now_info
+            result += limit_info
+            # ->.set并结束
             if set_name != "":
                 result += "->." + set_name
-            print("WARN: When there is id limitation in a OceanHuedClam, other limitations cannot function.\n"
-                  "警示意义的：使用id限定后，其他「海染砗磲」条件无法生效。\n")
             result += ";"
-            return result
-        # 从集合
-        if self.__from_OceanHuedClam_list:
-            for from_OceanHuedClam in self.__from_OceanHuedClam_list:
-                if isinstance(from_OceanHuedClam, str):
-                    result += "." + from_OceanHuedClam
-                else:
-                    if len(from_OceanHuedClam) > 1:
-                        print("INFO: OceanHuedClam " + (set_name if set_name != "" else "default") +
-                              " uses data from a intersection of multiple OceanHuedClams.\n"
-                              "信息：所装备的「海染砗磲」“" + (set_name if set_name != "" else "全集") +
-                              "”使用了多个其他「海染砗磲」的交集。\n")
-                    for x in from_OceanHuedClam:
-                        result += "." + x
-
-        # around
-        if self.__around_dict:
-            around_info = ""
-            for around in self.__around_dict:
-                if isinstance(around, str):
-                    around_info += "(around." + around + ":" + str(self.__around_dict[around]) + ")"
-                else:
-                    around_info += "(around" + ":" + str(around)
-                    for point in self.__around_dict[around]:
-                        around_info += "," + str(point)
-                    around_info += ")"
-            result += around_info
-        # poly
-        if self.__located_in_list:
-            poly_info = "(poly:\""
-            for x in range(len(self.__located_in_list) - 1):
-                poly_info += str(self.__located_in_list[x]) + " "
-            poly_info += str(self.__located_in_list[len(self.__located_in_list) - 1]) + "\")"
-        # k_v
-        limit_info = ""
-        for key in self.__kv_dict:
-            value = self.__kv_dict[key].get("value")
-            match self.__kv_dict[key].get("relation"):
-                case "exist":  # 存在key（value可不填）
-                    now_info = "[\"" + key + "\"]"
-                case "!exist":  # 不存在key
-                    now_info = "[!\"" + key + "\"]"
-                case "=":  # 存在key且对应value匹配
-                    now_info = "[\"" + key + "\"" + "=\"" + value + "\"]"
-                case "!=":  # 存在key但对应value不匹配 或 不存在key
-                    now_info = "[\"" + key + "\"" + "!=\"" + value + "\"]"
-                case "=!=":  # 必须存在key但对应value不匹配
-                    now_info = "[\"" + key + "\"][\"" + key + "\"!=\"" + value + "\"]"
-                case "v-reg":  # v可含正则表达式
-                    now_info = "[\"" + key + "\"~\"" + value + "\"]"
-                case "!v-reg":  # v可含正则表达式但不匹配
-                    now_info = "[\"" + key + "\"!~\"" + value + "\"]"
-                case "kv-reg":  # kv皆可含正则表达式
-                    now_info = "[~\"" + key + "\"~\"" + value + "\"]"
-                case "v-Aa_no_care":  # v可含正则表达式且不分大小写
-                    now_info = "[~\"" + key + "\"~\"" + value + "\",i]"
-                case _:
-                    now_info = ""
-            limit_info += now_info
-        result += limit_info
-        # 处理集合并结束
-        if set_name != "":
-            result += "->." + set_name
-        result += ";"
-        return result
+            result_list.append(result)
+        return result_list

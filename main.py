@@ -88,9 +88,12 @@ class Kokomi:
                 return -1
 
     # 查询要素：本次查询收到的报文将储存在kokomi的临时锦囊（directive_text_temp）中，并调用get_directive_dict处理信息。
-    #   参数1为【查询指令，str】：在珊瑚宫（Overpass）查询的参数，以“data="后开始，默认为空，当然返回的报文也会告诉你不给东西查不到。
+    #   参数1为【查询指令，str或OceanHuedClam】：在珊瑚宫（Overpass）查询的参数，默认为空str，其中：
+    #       str：以“data="后开始，当然返回的报文也会告诉你不给东西查不到。
+    #       OceanHuedClam：传入一个海染砗磲对象，并直接按照其中设置的条件查询
+    #   参数2为【延时，int】：设置最大超时时长，默认为500。
     # 返回list，其中：
-    #   第一项为int：总分割查询次数n；
+    #   第1项为int：总分割查询次数n；
     #   随后n项，每项均为int：每次查询结果：
     #   【2】：向珊瑚宫成功地GET了报文；
     #   【-1】：珊瑚宫没有传回任何消息，可能是海祇岛（Network）连接原因；

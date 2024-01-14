@@ -3,14 +3,13 @@
 ### 1.Kokomi暂时不需要其他的三方库，欲邀请Kokomi，请：
 
 ```python
-from main import Kokomi
+from src.Kokomi.main import Kokomi
 ```
 
-### 2.当然请不要忘记带上她心爱的海染砗磲【OceanHuedClam（QL语句）】和水母【Jellyfish（要素集）】：
+### 2.当然请不要忘记带上她心爱的海染砗磲【OceanHuedClam（QL语句）】和：
 
 ```python
-from main import OceanHuedClam
-from main import Jellyfish
+from src.Kokomi.main import OceanHuedClam
 ```
 
 ℹ 这是现阶段的，后续合并了就只用 import Kokomi 了。

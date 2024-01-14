@@ -1,5 +1,8 @@
-from main import Kokomi
-from main import OceanHuedClam
+import os
+import sys
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
+from Kokomi.main import Kokomi, OceanHuedClam
 
 # 检索同时在上京站和人民广场周围1000m内的公交站
 waifu = Kokomi()

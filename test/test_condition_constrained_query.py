@@ -4,10 +4,6 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
 from Kokomi.main import Kokomi, OceanHuedClam,Jellyfish
 
-from main import Kokomi
-from main import OceanHuedClam
-from main import Jellyfish
-
 # 测试1：测试方法链
 '''
 limit1 = OceanHuedClam("nwr")

@@ -132,3 +132,5 @@ for nodeID in waifu.directive_dict.get("node")[nodeID]:
 #### ② 对于线、关系
 
 线和关系比点额外多出一些内容：线的内容中有构成其的拐点的ID，关系包含组成其的成员类型、ID和在关系中的角色，可以按照读取tag类似的方法实现，但注意，关系的member_dict中的字典ID是成员类型和ID（数字）的组合。
+
+[↓ 海染砗磲 · 查询语句基础](https://github.com/Daredemodaisuki/Kokomi/blob/main/docs/2%20-%20QL%20with%20OceanHuedClam.md)

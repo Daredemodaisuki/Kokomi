@@ -1,139 +1,6 @@
-## Ⅰ 开始
+[↑ 开始 · Kokomi基本内容](https://github.com/Daredemodaisuki/Kokomi/blob/main/docs/1%20-%20To%20start%20and%20invite%20Kokomi.md)
 
-### 1.Kokomi暂时不需要其他的三方库，欲邀请Kokomi，请：
-
-```python
-from src.Kokomi.main import Kokomi
-```
-
-### 2.当然请不要忘记带上她心爱的海染砗磲【OceanHuedClam（QL语句）】和：
-
-```python
-from src.Kokomi.main import OceanHuedClam
-```
-
-ℹ 这是现阶段的，后续合并了就只用 import Kokomi 了。
-
-### 3.请赋予Kokomi在你的文件的中一个化身：
-
-  示例：
-```python
-waifu = Kokomi()
-```
-
-## Ⅱ 请Kokomi查询
-
-### 1.为Kokomi所在的海祇岛【Watatsumi（Network）】指定珊瑚宫【Sangonomiya（Overpass）】：
-
-使用Watatsumi_set函数可以指定珊瑚宫（Overpass），其：
-+ 参数1为【预设名称，str】（"OSMde"、"OSMru"、"OGF"、"None"）：使用预设珊瑚宫（Overpass）伺服器配置，或不使用预设（"None"）；
-+ 参数2为【自定名称，str】：参数1为"None"时，自定义珊瑚宫（Overpass）伺服器名称，默认为空；
-+ 参数3为【自定API地址，str】：参数1为"None"时，自定义珊瑚宫（Overpass）伺服器API地址，填写至"interpreter?..."前，默认为空。
-
-  返回int：
-+ 【1】：成功使用预设配置；
-+ 【0】：成功使用自定义配置；
-+ 【-1】：使用了未定义的预设名称；
-+ 【-2】：不完整的自定义配置。
-
-示例：
-```python
-waifu.Watatsumi_set("OSMde")
-```
-
-  后续Kokomi会在你指定的珊瑚宫（Overpass）寻找数据。
-
-### 2.告诉Kokomi希望查询的内容：
-
-使用query函数可以请她帮帮忙，在前述指定的珊瑚宫（Overpass）寻找一些锦囊（OSM要素）数据，此函数：
-+ 参数1为【查询指令，str】：在珊瑚宫（Overpass）查询的参数，以“data="后开始，默认为空，当然返回的报文也会告诉你不给东西查不到。
-
-  返回int：
-+ 【2】：向珊瑚宫（Overpass）成功地GET了报文；
-+ 【-1】：珊瑚宫（Overpass）没有传回任何消息，可能是海祇岛（Network）连接原因；
-+ 【-2】：珊瑚宫（Overpass）api未指定。
-  
-如果你已经对各珊瑚宫（Overpass）的QL语句十分甚至九分熟悉，你可以直接写QL条件。
-
-示例：请帮我找一找名称为“粮站院内”（name=粮站院内）的锦囊点
-    
-```python
-waifu.query("data=[out:xml][timeout:25];node[\"name\"=\"粮站院内\"];out body;")
-```
-
-稍等片刻，她会将找到的全部数据报报文先存在她的directive_text_temp中，然后她会把数据归类，存储在directive_dict中，并且给你如下的答复：
-  
-```
-INFO: 4 node (s) have been found.
-信息：Kokomi找到了 4 个 node 。
-
-INFO: 0 way (s) have been found.
-信息：Kokomi找到了 0 个 way 。
-
-INFO: 0 relation (s) have been found.
-信息：Kokomi找到了 0 个 relation 。
-```
-
-ℹ 数据截止至2023年6月26日。
-
-### 3.查看内容：
-
-上回书说到，彼时的Kokomi会把数据归类，但注意，她目前是在手撸XML（人话：通过“</”之类的关键字做切割，说不准来个阿拉伯文她也会头大），她把分好的内容放在了directive_dict中，包含“点（node）”“线（way）”“关系（relation）”三类，里面长这样：
-
-```python
-{"node": {
-  {点ID: {
-            "type": "node",
-            "tag_dict": {键名: 值, ...},
-            "member_dict": {},  # 空的
-            "node_list": []  # 空的
-            "text": 报文全文
-            },
-        ...
-        }
-    },
- "way": {
-  {线ID: {
-            "type": "way",
-            "tag_dict": {键名: 值, ...},
-            "member_dict": {},  # 空的
-            "node_list": [ID1, ID2, ...]
-            "text": 报文全文
-            },
-        ...
-        }
-    },
- "relation": {
-  {关系ID: {
-            "type": "relation",
-            "tag_dict": {键名: 值, ...},
-            "member_dict": {成员类型 + ID: 角色, ...},
-            "node_list": []  # 空的
-            "text": 报文全文
-            },
-        ...
-        }
-    },
-}
-```
-
-#### ① 读某个锦囊（要素）的tag
-
-按照珊瑚宫（Overpass）的要求，对于前述三类锦囊（要素），如果有用于描述它们的tag，那tag会包括“键（key）”与“值（value）”两部分。Kokomi将它们放在了directive_dict字典>对应锦囊（要素）类别的分字典>对应锦囊ID的锦囊（要素）字典>tag字典中，可以一级一级的向下读，并返回你需要的内容。
-
-示例：遍历directive_dict中的所有锦囊（要素）中点的名称（键为“name”，如果有）：
-    
-```python
-for nodeID in waifu.directive_dict.get("node")[nodeID]:
-  if "name" in nodeID["tag_dict"]:
-    print nodeID["tag_dict"]["name"]
-```
-
-#### ② 对于线、关系
-
-线和关系比点额外多出一些内容：线的内容中有构成其的拐点的ID，关系包含组成其的成员类型、ID和在关系中的角色，可以按照读取tag类似的方法实现，但注意，关系的member_dict中的字典ID是成员类型和ID（数字）的组合。
-
-## Ⅲ 使用海染砗磲（QL语句）和水母（要素集）帮助Kokomi更精确地查询
+## Ⅲ 使用海染砗磲（QL语句）精确地查询
 
 如果你对珊瑚宫（Overpass）的QL语句不是很熟悉，或者单纯嫌看着难受，可以考虑给Kokomi刷一套海染砗磲（QL语句）来生成QL语句方便她查询，当需求比较复杂，可以配合水母（要素集）帮你奶一口。
 
@@ -154,10 +21,11 @@ limit1 = OceanHuedClam("nwr")
 
 ```python
 ① def key_value(self, key: str, relation: str, value: str = "") -> 'OceanHuedClam'
-② def id(self, directive_id: str) -> 'OceanHuedClam'
-③ def in_bbox(self, e: str, n: str, s: str, w: str) -> 'OceanHuedClam'
-④ def recurse(self, jellyfish: str = "", direction: str = "") -> 'OceanHuedClam'
+② def around(self, set_point: (str or list), r: int) -> 'OceanHuedClam'
+③ def id(self, directive_id: (int or str or list), id_opreation: str = "=") -> 'OceanHuedClam'
+④ def set_bbox(self, E: int, S: int, W: int, N: int) -> 'OceanHuedClam'
 ... TODO
+def recurse(self, jellyfish: str = "", direction: str = "") -> 'OceanHuedClam'
 ```
 
 你可能注意到，这些方法都返回新的海染砗磲对象，海染砗磲采用方法链（method chaining）模式，所以使用其的方法是直接将方法追加至现有的海染砗磲（QL语句）后，可以连续追加；这些方法内部也对self的内容进行了修改，所以你可以选择使用一个新的变量来承载追加方法后海染砗磲（QL语句），也可以不用，即下面的示例中limit1和limit2是等价的；此外，派森的赋值只大致算是赋地址，所以即使在limit1变化前将其赋给limit3，limit3在limit1变化后还是与limit1保持等价：
@@ -191,22 +59,20 @@ data=[out:xml][timeout:100];(nwr["name"~"foo"]["amd"="yes"];);out body;
 
 此方法用于限定查询主体的键值关系，其：
 + 参数1为【限定键，str】：限定必须出现或有对应值要求的键；
-+ 参数2为【限制关系，str】（"exist"、"!exist"、"="、"!="、"=!="、"v-reg"、"!v-reg"、"kv-reg"、"v-Aa_no_care"）：限定键值之间的关系；
-+ 参数3为【限定值，str】：对限定键的值的要求
++ 参数2为【限制关系，str】（"exist"、"!exist"、"="、"!="、"=!="、"v-reg"、"!v-reg"、"kv-reg"、"v-Aa_no_care"）：限定键值之间的关系，其中：
+    + "exist"：存在key，此时参数3可不填；
+    + "!exist"：不存在key，此时参数3可不填；
+    + "="：存在key且对应value匹配；
+    + "!="：存在key但对应value不匹配或key单纯不存在；
+    + "=!="：必须存在key但对应value不匹配；
+    + "v-reg"：存在key且对应value匹配，此时参数3的value可含正则表达式；
+    + "!v-reg"：存在key但对应value不匹配，此时参数3的value可含正则表达式；
+    + "kv-reg"：存在key且对应value匹配，此时参数1的key、此时参数3的value皆可含正则表达式；
+    + "v-Aa_no_care"：存在key且对应value匹配，此时参数3的value可含正则表达式且不分大小写。
++ 参数3为【限定值，str】：对限定键的值的要求；
 
   返回OceanHuedClam：
 + 如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。
-
-参数2括号中的值的意思如下：
-+ "exist"：存在key，此时参数3可不填；
-+ "!exist"：不存在key，此时参数3可不填；
-+ "="：存在key且对应value匹配；
-+ "!="：存在key但对应value不匹配或key单纯不存在；
-+ "=!="：必须存在key但对应value不匹配；
-+ "v-reg"：存在key且对应value匹配，此时参数3的value可含正则表达式；
-+ "!v-reg"：存在key但对应value不匹配，此时参数3的value可含正则表达式；
-+ "kv-reg"：存在key且对应value匹配，此时参数1的key、此时参数3的value皆可含正则表达式；
-+ "v-Aa_no_care"：存在key且对应value匹配，此时参数3的value可含正则表达式且不分大小写。
 
 示例：查询英语名称包含“Shimo-Kitazawa”（不清楚“k”的大小写是否正确）的铁道站（至少包含键为“train”的tag）：
 
@@ -232,10 +98,26 @@ limit1.key_value("name", "=", "天云峠").key_value("name", "=", "天云山上�
 ["name"="天云山上下"]
 ```
 
-#### ② id方法
+#### ② around方法
+
+此方法查询特定锦囊（要素）周边指定半径的内容。
++ 参数1为【中心锦囊（要素），str或list】：检索周边的圆心：
+    + str：中心锦囊集（要素集）的名称，将检索其中各锦囊（要素）周边指定半径的内容；
+    + list：由一串经纬度对组成的偶数项列表，形如[纬度1, 经度1, 纬度2, 经度2, ...]，表示各经纬度对组成的点构成的线段，将检索其周边指定半径的内容，其中：
+        + 第2n-1项为float、int或str：第n个点的纬度；
+        + 第2n项为float、int或str：第n个点的经度；
++ 参数2为【半径，int】：周边检索的半径，单位为米；
+
+  返回OceanHuedClam：
++ 如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。
+
+#### ③ id方法
 
 此方法用于限定查询主体的id，id在珊瑚宫（Overpass）上是锦囊（要素）的唯一标识符，限制后每种锦囊（锦囊）只会查询到特定的那一个，所以一般也不用追加其他限定，此方法：
-+ 参数1为【限定id，str】：欲限定的id；
++ 参数1为【中心锦囊（要素），str或list】：海染砗磲（QL语句）：
+    + str：或查询（并集），单次使用本方法时输入一个集合，通过连续使用数次本方法达到从多个海染砗磲（QL语句）的并集提取；
+    + list：和查询（交集），由数个海染砗磲（QL语句）名称组成的列表，列表内的海染砗磲（QL语句）需要同时满足，呈交集；输入的列表与其他使用本方法输入的海染砗磲（QL语句）呈并集，其中：
+        + 每一项均为str：需要同时满足的海染砗磲（QL语句）名称；
 
   返回OceanHuedClam：
 + 如果成功，则返回已经追加限制语句的OceanHuedClam；否则原样不动地返回。
@@ -243,7 +125,7 @@ limit1.key_value("name", "=", "天云峠").key_value("name", "=", "天云山上�
 示例：查询ID为114514的点：
 
 ```python
-limit1 = OceanHuedClam("node").id("114514")
+limit1 = OceanHuedClam("node").id(114514)
 ```
 
 其相当于QL中的：
@@ -252,12 +134,12 @@ limit1 = OceanHuedClam("node").id("114514")
 node(id:114514);
 ```
 
-#### ③ in_bbox方法
+#### ④ in_bbox方法
 
 此方法用于限定查询主体的位置，将会按经纬度构造一个界定框，锦囊（要素）不论是点、线、关系（包括其下的点、线），只要擦进了界定框就算满足条件，此方法：
 + 参数1为【东至，str】：欲限定的界定框的东边界的十进制经度；
-+ 参数2为【西至，str】：欲限定的界定框的西边界的十进制经度；
-+ 参数3为【南至，str】：欲限定的界定框的南边界的十进制纬度；
++ 参数2为【南至，str】：欲限定的界定框的南边界的十进制经度；
++ 参数3为【西至，str】：欲限定的界定框的西边界的十进制纬度；
 + 参数4为【北至，str】：欲限定的界定框的北边界的十进制纬度；
 
   返回OceanHuedClam：
@@ -268,7 +150,7 @@ node(id:114514);
 此方法用于递归查询，比如Kokomi找到了一个锦囊（要素）点，它在一条线上，你希望揪出那条线，当然，顺着线可能可以找到它所在的关系，等等等等，这叫递归，此方法：
 + 参数1为【欲递归的水母名，str】
 
-### 2. 水母（要素集）
+### 2. 水母（要素集）【TODO：删！】
 
 水母在这里的概念是要素集，一个水母对象就是代表一个要素集，就像数学中的集合可以包含一些对象，水母（要素集）可以包含锦囊（要素），集合可以用条件限制所包含的对象，水母（要素集）可以用海染砗磲（QL语句）限制所包含的锦囊（要素），大概就是：
 

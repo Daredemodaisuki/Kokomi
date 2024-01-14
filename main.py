@@ -89,20 +89,39 @@ class Kokomi:
 
     # 查询要素：本次查询收到的报文将储存在kokomi的临时锦囊（directive_text_temp）中，并调用get_directive_dict处理信息。
     #   参数1为【查询指令，str】：在珊瑚宫（Overpass）查询的参数，以“data="后开始，默认为空，当然返回的报文也会告诉你不给东西查不到。
-    # 返回int：
+    # 返回list，其中：
+    #   第一项为int：总分割查询次数n；
+    #   随后n项，每项均为int：每次查询结果：
     #   【2】：向珊瑚宫成功地GET了报文；
     #   【-1】：珊瑚宫没有传回任何消息，可能是海祇岛（Network）连接原因；
     #   【-2】：珊瑚宫api未指定。
-    def query(self, content: str = "") -> int:
+    def query(self, query_info: (str or 'OceanHuedClam') = "", timeout: int = 500) -> list:
         self.energy_check()
+        result_list = []
+        if isinstance(query_info, str):
+            print("INFO: Kokomi is finding in Sangonomiya(Overpass).\n信息：Kokomi正在珊瑚宫（Overpass）翻箱倒柜：")
+            result_list.append(1)
+            result = self.get_content("data=[out:xml][timeout:" + str(timeout) + "];" + query_info + "out body;")
+            result_list.append(result)
+        else:
+            query_list = query_info.convert()
+            result_list.append(len(query_list))
+            for x in range(len(query_list)):
+                print("INFO: Kokomi is finding in Sangonomiya(Overpass) (", x + 1, "/", len(query_list), "):\n"
+                      "信息：Kokomi正在珊瑚宫（Overpass）翻箱倒柜（第", x + 1, "次/共", len(query_list), "次）：")
+                result = self.get_content("data=[out:xml][timeout:" + str(timeout) + "];" + query_list[x] + "out body;")
+                result_list.append(result)
+        return result_list
+        # TODO:query之后的合并
+
+    def get_content(self, query_info: str = ""):
+        print(self.Watatsumi["Sangonomiya_api"] + "interpreter?" + query_info, "\n")
         if self.Watatsumi["Sangonomiya_api"] == "":
             print("ERROR: No Sangonomiya(Overpass) info.\n错误的：珊瑚宫（Overpass）未指定。\n")
             self.energy = self.energy - 2
             return -2
         else:
-            text_temp = requests.get(self.Watatsumi["Sangonomiya_api"] + "interpreter?" + content).text
-            print("INFO: Kokomi is finding in Sangonomiya(Overpass).\n信息：Kokomi正在珊瑚宫（Overpass）翻箱倒柜：\n",
-                  self.Watatsumi["Sangonomiya_api"] + "interpreter?" + content, "\n")
+            text_temp = requests.get(self.Watatsumi["Sangonomiya_api"] + "interpreter?" + query_info).text
             if text_temp == "":
                 print("ERROR: No info from Sangonomiya(Overpass).\n错误的：珊瑚宫（Overpass）没有回传任何信息。\n")
                 self.energy = self.energy - 1

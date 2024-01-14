@@ -115,7 +115,6 @@ class Kokomi:
                 result = self.get_content("data=[out:xml][timeout:" + str(timeout) + "];" + query_list[x] + "out body;")
                 result_list.append(result)
         return result_list
-        # TODO:query之后的合并
 
     def get_content(self, query_info: str = ""):
         print(self.Watatsumi["Sangonomiya_api"] + "interpreter?" + query_info, "\n")
@@ -239,6 +238,7 @@ class OceanHuedClam:
         self.__around_dict = {}
         self.__global_bbox_list = []  # 南、西、北、东
         self.__id_dict = {}
+        self.__recurse_dict = {}
         self.__located_in_list = []
 
     # 海染砗磲（QL语句）之键值关系限制语句：限定查询主体的key与value。
@@ -320,6 +320,10 @@ class OceanHuedClam:
 
     def set_bbox(self, E: int, S: int, W: int, N: int) -> 'OceanHuedClam':
         self.__global_bbox_list = [S, W, N, E]
+        return self
+
+    def extend(self, direction: str, set_name: str = "_") -> 'OceanHuedClam':  # recurse
+        self.__recurse_dict.update({set_name: direction})
         return self
 
     def id(self, directive_id: (int or str or list), id_opreation: str = "=") -> 'OceanHuedClam':
@@ -529,9 +533,16 @@ class OceanHuedClam:
                         now_info = ""
                 limit_info += now_info
             result += limit_info
-            # ->.set并结束
+            # ->.set
             if set_name != "":
                 result += "->." + set_name
             result += ";"
+            # extend(recurse)
+            recurse_info = ""
+            if self.__recurse_dict:
+                for recurse in self.__recurse_dict:
+                    recurse_info += "." + recurse + self.__recurse_dict[recurse] + ";"
+            result += recurse_info
+            # 结束
             result_list.append(result)
         return result_list

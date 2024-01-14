@@ -1,6 +1,6 @@
 [↑ 开始 · Kokomi基本内容](https://github.com/Daredemodaisuki/Kokomi/blob/main/docs/1%20-%20To%20start%20and%20invite%20Kokomi.md)
 
-## Ⅲ 使用海染砗磲（QL语句）和水母（要素集）帮助Kokomi更精确地查询
+## Ⅲ 使用海染砗磲（QL语句）精确地查询
 
 如果你对珊瑚宫（Overpass）的QL语句不是很熟悉，或者单纯嫌看着难受，可以考虑给Kokomi刷一套海染砗磲（QL语句）来生成QL语句方便她查询，当需求比较复杂，可以配合水母（要素集）帮你奶一口。
 

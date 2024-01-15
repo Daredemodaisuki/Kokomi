@@ -437,19 +437,6 @@ class OceanHuedClam:
             # 每次都重置为只有include信息的，否则原来写在上面for循环之后只执行一次的话输出的内容会重复：
             # 就像这样：第一次查询include_info;node.A["name"]; 第二次include_info;node.A["name"];node.B["name"];
             result = include_info
-            # 全局界定框
-            if each_query.__global_bbox_list:
-                if not if_main:
-                    # TODO:这个判断需要吗？
-                    print(
-                        "WARN: Bbox in set " + set_name + " is disabled due to it is not the main set in this query.\n"
-                        "警示意义的：因为「海染砗磲」“" + set_name + "”不是最外层语句，其界定框限制不生效。\n")
-                else:
-                    bbox_info = "[bbox:"
-                    for x in range(3):
-                        bbox_info += str(each_query.__global_bbox_list[x]) + ","
-                    bbox_info += str(each_query.__global_bbox_list[3]) + "];"
-                    result += bbox_info
             # 类型
             result += each_query.__main_type
             # id（使用「=」限制）
@@ -533,6 +520,19 @@ class OceanHuedClam:
                         now_info = ""
                 limit_info += now_info
             result += limit_info
+            # 全局界定框
+            if each_query.__global_bbox_list:
+                if not if_main:
+                    # TODO:这个判断需要吗？
+                    print(
+                        "WARN: Bbox in set " + set_name + " is disabled due to it is not the main set in this query.\n"
+                        "警示意义的：因为「海染砗磲」“" + set_name + "”不是最外层语句，其界定框限制不生效。\n")
+                else:
+                    bbox_info = "(bbox:"
+                    for x in range(3):
+                        bbox_info += str(each_query.__global_bbox_list[x]) + ","
+                    bbox_info += str(each_query.__global_bbox_list[3]) + ")"
+                    result += bbox_info
             # ->.set
             if set_name != "":
                 result += "->." + set_name

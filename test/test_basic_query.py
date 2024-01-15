@@ -2,7 +2,7 @@ import os
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
-from Kokomi.main import Kokomi, OceanHuedClam
+from main import Kokomi, OceanHuedClam
 
 # 基本测试：是否跑得通，带多层集合的情况下
 Q1 = OceanHuedClam("nwr")\

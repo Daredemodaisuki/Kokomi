@@ -318,7 +318,7 @@ class OceanHuedClam:
                 # print(self.__from_OceanHuedClam_list)
         return self
 
-    def set_bbox(self, E: int, S: int, W: int, N: int) -> 'OceanHuedClam':
+    def set_bbox(self, E: float, S: float, W: float, N: float) -> 'OceanHuedClam':
         self.__global_bbox_list = [S, W, N, E]
         return self
 

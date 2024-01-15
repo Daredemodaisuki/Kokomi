@@ -1,6 +1,7 @@
 import requests
 
 from global_ import print_dict
+from OceanHuedClam import OceanHuedClam
 
 class Kokomi:
     def __init__(self):
@@ -78,7 +79,7 @@ class Kokomi:
                     self.energy = self.energy - 2
                     return -2
             else:
-                print(print_dict[0x2000])
+                print(print_dict[0x2002])
                 self.energy = self.energy - 1
                 return -1
 
@@ -97,7 +98,7 @@ class Kokomi:
         self.energy_check()
         result_list = []
         if isinstance(query_info, str):
-            print("INFO: Kokomi is finding in Sangonomiya(Overpass).\n信息：Kokomi正在珊瑚宫（Overpass）翻箱倒柜：")
+            print(print_dict[0x0010])
             result_list.append(1)
             result = self.get_content("data=[out:xml][timeout:" + str(timeout) + "];" + query_info + "out body;")
             result_list.append(result)
@@ -105,8 +106,7 @@ class Kokomi:
             query_list = query_info.convert()
             result_list.append(len(query_list))
             for x in range(len(query_list)):
-                print("INFO: Kokomi is finding in Sangonomiya(Overpass) (", x + 1, "/", len(query_list), "):\n"
-                      "信息：Kokomi正在珊瑚宫（Overpass）翻箱倒柜（第", x + 1, "次/共", len(query_list), "次）：")
+                print(print_dict[0x0011].format(now=x+1, total=len(query_list)))
                 result = self.get_content("data=[out:xml][timeout:" + str(timeout) + "];" + query_list[x] + "out body;")
                 result_list.append(result)
         return result_list
@@ -114,13 +114,13 @@ class Kokomi:
     def get_content(self, query_info: str = ""):
         print(self.Watatsumi["Sangonomiya_api"] + "interpreter?" + query_info, "\n")
         if self.Watatsumi["Sangonomiya_api"] == "":
-            print("ERROR: No Sangonomiya(Overpass) info.\n错误的：珊瑚宫（Overpass）未指定。\n")
+            print(print_dict[0x2000])
             self.energy = self.energy - 2
             return -2
         else:
             text_temp = requests.get(self.Watatsumi["Sangonomiya_api"] + "interpreter?" + query_info).text
             if text_temp == "":
-                print("ERROR: No info from Sangonomiya(Overpass).\n错误的：珊瑚宫（Overpass）没有回传任何信息。\n")
+                print(print_dict[0x2010])
                 self.energy = self.energy - 1
                 return -1
             else:
@@ -227,11 +227,10 @@ class Kokomi:
                 directive_list.update({directive_id: directive})
 
             # 结束
-            print("INFO:", directive_found, directive_type, "(s) have been found.\n信息：Kokomi找到了", directive_found,
-                  "个", directive_type, "。\n")
+            print(print_dict[0x0012].format(number=directive_found, type=directive_type))
             self.energy = self.energy + 1
             return directive_list
         else:
-            print("ERROR: Undefined Directive(Feature) type.\n错误的：没有定义的锦囊（要素）类型。\n")
+            print(print_dict[0x201A].format(type=directive_type))
             self.energy = self.energy - 1
             return {}

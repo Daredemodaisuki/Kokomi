@@ -7,6 +7,7 @@
   文档：
 + [→ 开始 · Kokomi基本内容](https://github.com/Daredemodaisuki/Kokomi/blob/main/docs/1%20-%20To%20start%20and%20invite%20Kokomi.md)
 + [→ 海染砗磲 · 查询语句基础](https://github.com/Daredemodaisuki/Kokomi/blob/main/docs/2%20-%20QL%20with%20OceanHuedClam.md)
++ [→ 海染砗磲 · 进阶联用与输出](https://github.com/Daredemodaisuki/Kokomi/blob/main/docs/3%20-%20More%20thing%20from%20multiple%20OceanHuedClams.md)
 
 ## N 一些应用场景示例
 

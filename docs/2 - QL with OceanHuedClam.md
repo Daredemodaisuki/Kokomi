@@ -6,18 +6,24 @@
 
 ### 1. 海染砗磲
 
-海染（音：hǎirǎn）砗磲（我猜你知道怎么读）在这里的概念大致是QL语句，一个海染砗磲对象就是代表一条QL语句，可以用来做内容限定，比如要求返回的锦囊（要素）有特定名称。
+海染（音：hǎirǎn）砗磲（我猜你知道怎么读）在这里的概念大致是QL中的语句或集合；一个海染砗磲（QL语句）对象就是代表一条QL完整的语句（以及其随后的递归语句，如果有），QL语句的大致格式是：
 
-当你想做限定时，刷一个海染砗磲，其初始化方法中：
-+ 参数1为【限定主体的类型，str】（"node"、"way"、"relation"、"nw"、"nr"、"wr"、"nwr"）：说明该海染砗磲是用来查询或者修饰何种类型的锦囊（要素），括号中的后4中类型为点、线、关系中2个或3个的组合的缩写，表示可以同时查询多种锦囊（要素）。
-
-示例：
-
-```python
-limit1 = OceanHuedClam("nwr")
+```
+type.set_A(extra_condition)[k_v](if)->.set_B;>;
 ```
 
-然后，对要查询的内容做限定，有如下一些方法，部分方法需要配合水母（要素集）使用，见后：
+这些语句可以用来在珊瑚宫（Overpass）查询锦囊（要素），QL具体语法请参考[该Wiki页面](https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL)。
+
+在Python中，使用海染砗磲（QL语句）类的方法即可输出上述内容；当你想做限定时，先刷一个海染砗磲（QL语句）并指定前述QL语句格式中的「type」，其初始化方法中：
++ 参数1为【限定主体的类型，str】（"node"、"way"、"relation"、"nw"、"nr"、"wr"、"nwr"）：说明该海染砗磲是用来查询或者修饰何种类型的锦囊（要素），括号中的后4中类型为点、线、关系中2个或3个的组合的缩写，表示可以同时查询多种锦囊（要素）。
+
+  示例：同时查询node、way以及relation
+
+```python
+Q1 = OceanHuedClam("nwr")
+```
+
+然后，对要查询的内容做限定，海染砗磲（QL语句）类有如下一些方法，其中部分方法需要与其他海染砗磲（QL语句）对象一并使用，见后：
 
 ```python
 ① def key_value(self, key: str, relation: str, value: str = "") -> 'OceanHuedClam'
@@ -28,7 +34,7 @@ limit1 = OceanHuedClam("nwr")
 def recurse(self, jellyfish: str = "", direction: str = "") -> 'OceanHuedClam'
 ```
 
-你可能注意到，这些方法都返回新的海染砗磲对象，海染砗磲采用方法链（method chaining）模式，所以使用其的方法是直接将方法追加至现有的海染砗磲（QL语句）后，可以连续追加；这些方法内部也对self的内容进行了修改，所以你可以选择使用一个新的变量来承载追加方法后海染砗磲（QL语句），也可以不用，即下面的示例中limit1和limit2是等价的；此外，派森的赋值只大致算是赋地址，所以即使在limit1变化前将其赋给limit3，limit3在limit1变化后还是与limit1保持等价：
+你可能注意到，这些方法都返回新的海染砗磲对象，海染砗磲采用**方法链（method chaining）**模式，所以使用其的方法是直接将方法追加至现有的海染砗磲（QL语句）后，可以连续追加；这些方法内部也对self的内容进行了修改，所以你可以选择使用一个新的变量来承载追加方法后海染砗磲（QL语句），也可以不用，即下面的示例中limit1和limit2是等价的；此外，派森的赋值只大致算是赋地址，所以即使在limit1变化前将其赋给limit3，limit3在limit1变化后还是与limit1保持等价：
 
 ```python
 limit1 = OceanHuedClam("nwr")
@@ -40,9 +46,9 @@ if limit1 == limit2:
 if limit3 == limit1:
   print("不可能，绝对不可能")
 
-print(limit1.get_full_text())  # 再调用一个输出的方法试试看？
-print(limit2.get_full_text())
-print(limit3.get_full_text())
+print(limit1.convert())  # 再调用一个输出的方法试试看？
+print(limit2.convert())
+print(limit3.convert())
 ```
 
 输出：
@@ -50,9 +56,9 @@ print(limit3.get_full_text())
 ```
 这都能一样？
 不可能，绝对不可能
-data=[out:xml][timeout:100];(nwr["name"~"foo"]["amd"="yes"];);out body;
-data=[out:xml][timeout:100];(nwr["name"~"foo"]["amd"="yes"];);out body;
-data=[out:xml][timeout:100];(nwr["name"~"foo"]["amd"="yes"];);out body;
+[data=[out:xml][timeout:100];(nwr["name"~"foo"]["amd"="yes"];);out body;]
+[data=[out:xml][timeout:100];(nwr["name"~"foo"]["amd"="yes"];);out body;]
+[data=[out:xml][timeout:100];(nwr["name"~"foo"]["amd"="yes"];);out body;]
 ```
 
 #### ① key_value方法

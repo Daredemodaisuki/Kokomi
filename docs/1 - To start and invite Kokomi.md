@@ -32,7 +32,7 @@ waifu = Kokomi()
 + 【-1】：使用了未定义的预设名称；
 + 【-2】：不完整的自定义配置。
 
-示例：
+  示例：
 ```python
 waifu.Watatsumi_set("OSMde")
 ```
@@ -54,7 +54,7 @@ waifu.Watatsumi_set("OSMde")
   
 如果您已经对各珊瑚宫（Overpass）的QL语句十分甚至九分熟悉，你可以直接写QL语句，即填入str；关于海染砗磲（QL语句）详见[海染砗磲 · 查询语句基础](https://github.com/Daredemodaisuki/Kokomi/blob/main/docs/2%20-%20QL%20with%20OceanHuedClam.md)。
 
-示例：请帮我找一找名称为“粮站院内”（name=粮站院内）的锦囊（要素）node
+  示例：请帮我找一找名称为“粮站院内”（name=粮站院内）的锦囊（要素）node
     
 ```python
 waifu.query("node[\"name\"=\"粮站院内\"]")
@@ -125,7 +125,7 @@ INFO: 0 relation (s) have been found.
 
 按照珊瑚宫（Overpass）的要求，对于前述三类锦囊（要素），如果有用于描述它们的tag，那tag会包括“键（key）”与“值（value）”两部分。Kokomi将它们放在了directive_dict字典>对应锦囊（要素）类别的分字典>对应锦囊ID的锦囊（要素）字典>tag字典中，可以一级一级的向下读，并返回你需要的内容。
 
-示例：遍历directive_dict中的所有锦囊（要素）中点的名称（键为“name”，如果有）：
+  示例：遍历directive_dict中的所有锦囊（要素）中点的名称（键为“name”，如果有）：
     
 ```python
 for nodeID in waifu.directive_dict.get("node")[nodeID]:

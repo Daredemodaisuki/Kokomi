@@ -28,4 +28,32 @@ print_dict = {
     0x2011: "",  # 超时
     0x201A: "ERROR: Undefined Directive(Feature) type: {type}.\n"
             "错误的：没有定义的锦囊（要素）类型：{type}。\n",
+
+    # OceanHuedClam
+    0x0100: "INFO: OceanHuedClam  {set}  is included.\n"  # include
+            "信息：「海染砗磲」“{set}”已装备。\n",
+
+    0x1100: "WARN: OceanHuedClam with the same name {set} has been included and will be replaced.\n"  # include
+            "警示意义的：同名「海染砗磲」“{set}”已存在，将被替换。",
+    0x1114: "WARN: When there is id limitation in an OceanHuedClam, other limitations cannot function.\n"  # id
+            "警示意义的：使用id限定后，其他「海染砗磲」条件无法生效。\n",
+    0x11A0: "INFO: OceanHuedClam {set} uses data from a intersection of multiple OceanHuedClams.\n"  # convert
+            "信息：所装备的「海染砗磲」“{set}”使用了多个其他「海染砗磲」的交集。\n",
+    0x11A1: "WARN: Bbox in set {set} is disabled due to it is not the main set in this query.\n"
+            "警示意义的：因为「海染砗磲」“{set}”不是最外层语句，其界定框限制不生效。\n",
+
+    0x2104: "ERROR: Undefined key-value relation.\n"  # k_v
+            "错误的：未定义的键值关系。\n",
+    0x2105: "ERROR: Value needed except exist and !exist.\n"
+            "错误的：除exist、!exist条件外需要键的值。\n",
+    0x2108: "ERROR: Not-included OceanHuedClam {set}.\n"  # around
+            "错误的：找不到「海染砗磲」“{set}”。\n",
+    0x2109: "ERROR: Lat/lon-s not in pairs.\n"
+            "错误的：传入的点串线坐标[纬度1, 经度1, 纬度2, 经度2, ...]不成对。\n",
+    0x210C: "ERROR: Not-included OceanHuedClam {set}.\n"  # set_from
+            "错误的：找不到「海染砗磲」“{set}”。\n",
+    0x210D: "ERROR: Name list not made up with str.\n"
+            "错误的：传入名称列表包含非字符串元素。\n",
+    0x2110: "ERROR: Lat/lon-s not in pairs.\n"  # located_in
+            "错误的：传入的多边形坐标[纬度1, 经度1, 纬度2, 经度2, ...]不成对。\n",
 }

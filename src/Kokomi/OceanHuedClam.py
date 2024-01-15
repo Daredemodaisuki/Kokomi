@@ -29,13 +29,13 @@ class OceanHuedClam:
         # v可含正则表达式、v可含正则表达式但不匹配、kv皆可含正则表达式，v可含正则表达式且不分大小写
         if relation in relation_list:
             if relation not in ["exist", "!exist"] and value == "":
-                print("ERROR: Value needed except exist and !exist.\n错误的：除exist、!exist条件外需要键的值。\n")
+                print(print_dict[0x2105])
                 return self
             else:
                 self.__kv_dict.update({key: {"value": value, "relation": relation}})
                 return self
         else:
-            print("ERROR: Undefined key-value relation.\n错误的：未定义的键值关系。\n")
+            print(print_dict[0x2104])
             return self
 
     # 海染砗磲（QL语句）之周边检索：查询特定锦囊（要素）周边指定半径的内容。
@@ -51,15 +51,13 @@ class OceanHuedClam:
         # 要素集合
         if isinstance(set_point, str):
             if (set_point not in self.__include_dict) and (set_point != "_"):
-                print("ERROR: Not-included OceanHuedClam " + set_point + ".\n"
-                      "错误的：找不到「海染砗磲」“" + set_point + "”。\n")
+                print(print_dict[0x2108].format(set=set_point))
             else:
                 self.__around_dict = {set_point: r}
         # 点串线
         else:
             if len(set_point) % 2 != 0:
-                print(
-                    "ERROR: Lat/lon-s not in pairs.\n错误的：传入的点串线坐标[纬度1, 经度1, 纬度2, 经度2, ...]不成对。\n")
+                print(print_dict[0x2109])
             else:
                 self.__around_dict = {r: set_point}
         return self
@@ -77,7 +75,7 @@ class OceanHuedClam:
             if (set_name in self.__include_dict) or (set_name == "_"):
                 self.__from_OceanHuedClam_list.append(set_name)
             else:
-                print("ERROR: Not-included OceanHuedClam " + set_name + ".\n错误的：找不到「海染砗磲」“" + set_name + "”。\n")
+                print(print_dict[0x210C].format(set=set_name))
         else:
             and_list = []
             for x in set_name:
@@ -85,13 +83,11 @@ class OceanHuedClam:
                     if (x in self.__include_dict) or (x == "_"):
                         and_list.append(x)
                     else:
-                        print("ERROR: Not-included OceanHuedClam " + set_name + ".\n"
-                              "错误的：找不到「海染砗磲」“" + set_name + "”。\n")
+                        print(print_dict[0x210C].format(set=set_name))
                 else:
-                    print("ERROR: List not made up with str.\n错误的：传入列表包含非字符串元素。\n")
+                    print(print_dict[0x210D])
             if len(and_list) > 0:
                 self.__from_OceanHuedClam_list.append(and_list)
-                # print(self.__from_OceanHuedClam_list)
         return self
 
     def set_bbox(self, E: float, S: float, W: float, N: float) -> 'OceanHuedClam':
@@ -108,22 +104,22 @@ class OceanHuedClam:
                 self.__id_dict.update({str(directive_id[x]): id_opreation})
         else:
             self.__id_dict.update({str(directive_id): id_opreation})
+        print(print_dict[0x1114])
         return self
 
     # 在多边形中（poly）
     def located_in(self, poly_list: list) -> 'OceanHuedClam':
         if len(poly_list) % 2 != 0:
-            print("ERROR: Lat/lon-s not in pairs.\n错误的：传入的多边形坐标[纬度1, 经度1, 纬度2, 经度2, ...]不成对。\n")
+            print(print_dict[0x2110])
         else:
             self.__located_in_list = poly_list
         return self
 
     def include_OceanHuedClam(self, set_name: str, the_set: 'OceanHuedClam') -> 'OceanHuedClam':
         if set_name in self.__include_dict:
-            print("WARN: OceanHuedClam with the same name " + set_name + " has been included and will be replaced.\n"
-                  "警示意义的：同名「海染砗磲」“" + set_name + "”已存在，将被替换。")
+            print(print_dict[0x1100].format(set=set_name))
         self.__include_dict.update({set_name: the_set})
-        print("INFO: OceanHuedClam " + set_name + " is included.\n信息：「海染砗磲」“" + set_name + "”已装备。\n")
+        print(print_dict[0x0100].format(set=set_name))
         return self
 
     # TODO:判断要几个查询，并把要查询的内容返回出去，以便外部查询，step=已经进行了几步，不重复执行
@@ -232,8 +228,6 @@ class OceanHuedClam:
                 # 有id限制时其他无法生效，直接处理集合并结束
                 if set_name != "":
                     result += "->." + set_name
-                print("WARN: When there is id limitation in a OceanHuedClam, other limitations cannot function.\n"
-                      "警示意义的：使用id限定后，其他「海染砗磲」条件无法生效。\n")
                 result += ";"
                 result_list.append(result)
                 continue
@@ -244,10 +238,7 @@ class OceanHuedClam:
                         result += "." + from_OceanHuedClam
                     else:
                         if len(from_OceanHuedClam) > 1:
-                            print("INFO: OceanHuedClam " + (set_name if set_name != "" else "default") +
-                                  " uses data from a intersection of multiple OceanHuedClams.\n"
-                                  "信息：所装备的「海染砗磲」“" + (set_name if set_name != "" else "全集") +
-                                  "”使用了多个其他「海染砗磲」的交集。\n")
+                            print(print_dict[0x11A0].format(set=(set_name if set_name != "" else "default")))
                         for x in from_OceanHuedClam:
                             result += "." + x
             # around
@@ -300,9 +291,7 @@ class OceanHuedClam:
             if each_query.__global_bbox_list:
                 if not if_main:
                     # TODO:这个判断需要吗？
-                    print(
-                        "WARN: Bbox in set " + set_name + " is disabled due to it is not the main set in this query.\n"
-                        "警示意义的：因为「海染砗磲」“" + set_name + "”不是最外层语句，其界定框限制不生效。\n")
+                    print(print_dict[0x11A1].format(set_name))
                 else:
                     bbox_info = "(bbox:"
                     for x in range(3):

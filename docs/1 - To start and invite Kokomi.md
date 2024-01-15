@@ -54,7 +54,7 @@ waifu.Watatsumi_set("OSMde")
   
 如果您已经对各珊瑚宫（Overpass）的QL语句十分甚至九分熟悉，你可以直接写QL语句，即填入str；关于海染砗磲（QL语句）详见[海染砗磲 · 查询语句基础](https://github.com/Daredemodaisuki/Kokomi/blob/main/docs/2%20-%20QL%20with%20OceanHuedClam.md)。
 
-  示例：请帮我找一找名称为“粮站院内”（name=粮站院内）的锦囊（要素）node
+  示例：请帮我找一找名称为「粮站院内」（name=粮站院内）的锦囊（要素）node
     
 ```python
 waifu.query("node[\"name\"=\"粮站院内\"]")

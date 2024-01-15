@@ -42,16 +42,19 @@ waifu.Watatsumi_set("OSMde")
 ### 2.告诉Kokomi希望查询的内容：
 
 使用query函数可以请她帮帮忙，在前述指定的珊瑚宫（Overpass）寻找一些锦囊（OSM要素）数据，此函数：
-+ 参数1为【查询指令，str】：在珊瑚宫（Overpass）查询的参数，以“data="后开始，默认为空，当然返回的报文也会告诉你不给东西查不到。
++ 参数1为【查询指令，str或OceanHuedClam】：在珊瑚宫（Overpass）查询的参数，默认为空str：
+    + str：以“data="后开始，当然返回的报文也会告诉你不给东西查不到；
+    + list：传入一个海染砗磲（QL语句）对象，并直接按照其中设置的条件查询；
++ 参数2为【延时，int】：设置最大超时时长，默认为500，单位为秒；
 
   返回int：
 + 【2】：向珊瑚宫（Overpass）成功地GET了报文；
 + 【-1】：珊瑚宫（Overpass）没有传回任何消息，可能是海祇岛（Network）连接原因；
 + 【-2】：珊瑚宫（Overpass）api未指定。
   
-如果你已经对各珊瑚宫（Overpass）的QL语句十分甚至九分熟悉，你可以直接写QL条件。
+如果您已经对各珊瑚宫（Overpass）的QL语句十分甚至九分熟悉，你可以直接写QL语句，即填入str；关于海染砗磲（QL语句）详见[海染砗磲 · 查询语句基础](https://github.com/Daredemodaisuki/Kokomi/blob/main/docs/2%20-%20QL%20with%20OceanHuedClam.md)。
 
-示例：请帮我找一找名称为“粮站院内”（name=粮站院内）的锦囊点
+示例：请帮我找一找名称为“粮站院内”（name=粮站院内）的锦囊（要素）node
     
 ```python
 waifu.query("data=[out:xml][timeout:25];node[\"name\"=\"粮站院内\"];out body;")

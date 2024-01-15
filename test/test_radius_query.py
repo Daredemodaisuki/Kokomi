@@ -2,7 +2,7 @@ import os
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
-from main import Kokomi, OceanHuedClam
+from main import *
 
 # 检索同时在上京站和人民广场周围1000m内的公交站
 waifu = Kokomi()

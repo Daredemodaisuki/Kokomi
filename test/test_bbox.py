@@ -2,7 +2,7 @@ import os
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
-from main import Kokomi, OceanHuedClam
+from main import *
 
 # 测试bbox
 

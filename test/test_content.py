@@ -2,7 +2,7 @@ import os
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
-from main import Kokomi, OceanHuedClam
+from main import *
 from xpinyin import Pinyin
 
 # 有哪些外国地名的英文拼写，恰好和它的普通话翻译的汉语拼音拼写一样？

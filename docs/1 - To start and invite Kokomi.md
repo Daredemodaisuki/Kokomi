@@ -86,8 +86,9 @@ INFO: 0 relation (s) have been found.
             "type": "node",
             "tag_dict": {键名: 值, ...},
             "member_dict": {},  # 空的
-            "node_list": []  # 空的
-            "text": 报文全文
+            "node_list": [],  # 空的
+            "text": 报文全文,
+            "lon_lat": [经度, 纬度]
             },
         ...
         }
@@ -97,8 +98,9 @@ INFO: 0 relation (s) have been found.
             "type": "way",
             "tag_dict": {键名: 值, ...},
             "member_dict": {},  # 空的
-            "node_list": [ID1, ID2, ...]
-            "text": 报文全文
+            "node_list": [ID1, ID2, ...],
+            "text": 报文全文,
+            "lon_lat": []  # 空的
             },
         ...
         }
@@ -108,14 +110,17 @@ INFO: 0 relation (s) have been found.
             "type": "relation",
             "tag_dict": {键名: 值, ...},
             "member_dict": {成员类型 + ID: 角色, ...},
-            "node_list": []  # 空的
-            "text": 报文全文
+            "node_list": [],  # 空的
+            "text": 报文全文,
+            "lon_lat": []  # 空的
             },
         ...
         }
     },
 }
 ```
+
+其中，所有内容均为str。
 
 #### ① 读某个锦囊（要素）的tag
 

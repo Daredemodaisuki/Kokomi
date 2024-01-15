@@ -139,8 +139,9 @@ class Kokomi:
     #       "type": 锦囊类型,
     #       "tag_dict": {键名: 值, ...},
     #       "member_dict": {成员类型 + ID: 角色, ...},
-    #       "node_list": [ID1, ID2, ...]
-    #       "text": 报文全文
+    #       "node_list": [ID1, ID2, ...],
+    #       "text": 报文全文,
+    #       "lon_lat": [经度, 纬度]
     #       },
     #   ...
     #   }。
@@ -150,11 +151,11 @@ class Kokomi:
             directive_behind = 0
             directive_found = 0
             directive_list = {}
+            # 用behind作为start是说从上一个结束之后开始查下一个
             while directive_text.find("<" + directive_type, directive_behind) != -1:
                 # 找报文开头结尾
                 directive_front = directive_text.find("<" + directive_type, directive_behind)
                 # 如果“"/>”比“">”先来，那说明只有一行，结尾是“/>“（/>不取双引号"因为取id要用）
-                # TODO：经纬度
                 if directive_text.find("/>", directive_front) < directive_text.find("\">", directive_front):
                     directive_behind = directive_text.find("/>", directive_front)
                 else:  # 否则是很多行，结尾是"</" + directive_type + ">"
@@ -166,6 +167,16 @@ class Kokomi:
                 id_front = dealt_text.find("id=\"") + 4
                 id_behind = dealt_text.find("\"", id_front)
                 directive_id = dealt_text[id_front:id_behind]
+                # 点经纬度
+                lon_lat_list = []
+                if directive_type == "node":
+                    lat_front = dealt_text.find("lat=\"") + 5
+                    lat_behind = dealt_text.find("\"", lat_front)
+                    directive_lat = dealt_text[lat_front:lat_behind]
+                    lon_front = dealt_text.find("lon=\"") + 5
+                    lon_behind = dealt_text.find("\"", lon_front)
+                    directive_lon = dealt_text[lon_front:lon_behind]
+                    lon_lat_list = [directive_lon, directive_lat]
 
                 # 分割dealt_text
                 line_front = 0
@@ -180,7 +191,9 @@ class Kokomi:
                     line_text = dealt_text[line_front + 2:line_behind]
                     # print(line_text)
                     # line_found = line_found + 1
+
                     # 处理tag、member、nd
+                    # TODO:可以使用directive_type判断？
                     if line_text.find("<tag") != -1:
                         line_key = line_text[
                                    line_text.find("k=\"") + 3:line_text.find("\" ", line_text.find("k=\"") + 3)]
@@ -208,7 +221,8 @@ class Kokomi:
                              "tag_dict": tag_dict,
                              "member_dict": member_dict,
                              "node_list": node_list,
-                             "text": dealt_text
+                             "text": dealt_text,
+                             "lon_lat": lon_lat_list
                              }
                 directive_list.update({directive_id: directive})
 

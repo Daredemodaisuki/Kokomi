@@ -2,7 +2,7 @@
 [↓ 海染砗磲 · 查询语句基础](https://github.com/Daredemodaisuki/Kokomi/blob/main/docs/2%20-%20QL%20with%20OceanHuedClam.md)
 
 ## Ⅰ 开始
-### 1.请赋予Kokomi在你的文件的中一个化身：
+### 1.请邀请Kokomi：
 
 Kokomi暂时不需要其他的三方库，欲邀请Kokomi及各附属，请：
 

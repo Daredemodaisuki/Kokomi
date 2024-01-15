@@ -42,8 +42,8 @@ waifu.Watatsumi_set("OSMde")
 ### 2.告诉Kokomi希望查询的内容：
 
 使用query函数可以请她帮帮忙，在前述指定的珊瑚宫（Overpass）寻找一些锦囊（OSM要素）数据，此函数：
-+ 参数1为【查询指令，str或OceanHuedClam】：在珊瑚宫（Overpass）查询的参数，默认为空str：
-    + str：以“data="后开始，当然返回的报文也会告诉你不给东西查不到；
++ 参数1为【查询指令，str或OceanHuedClam】：在珊瑚宫（Overpass）查询的参数，默认为空str（当然返回的报文也会告诉你查不到）：
+    + str：具体的QL语句开始（即不含api、「data=[out:xml][timeout:xx]」「out body;」等）；
     + list：传入一个海染砗磲（QL语句）对象，并直接按照其中设置的条件查询；
 + 参数2为【延时，int】：设置最大超时时长，默认为500，单位为秒；
 
@@ -57,7 +57,7 @@ waifu.Watatsumi_set("OSMde")
 示例：请帮我找一找名称为“粮站院内”（name=粮站院内）的锦囊（要素）node
     
 ```python
-waifu.query("data=[out:xml][timeout:25];node[\"name\"=\"粮站院内\"];out body;")
+waifu.query("node[\"name\"=\"粮站院内\"]")
 ```
 
 稍等片刻，她会将找到的全部数据报报文先存在她的directive_text_temp中，然后她会把数据归类，存储在directive_dict中，并且给你如下的答复：
@@ -77,7 +77,7 @@ INFO: 0 relation (s) have been found.
 
 ### 3.查看内容：
 
-上回书说到，彼时的Kokomi会把数据归类，但注意，她目前是在手撸XML（人话：通过“</”之类的关键字做切割，说不准来个阿拉伯文她也会头大），她把分好的内容放在了directive_dict中，包含“点（node）”“线（way）”“关系（relation）”三类，里面长这样：
+上回书说到，彼时的Kokomi会把数据归类，但注意，她目前是在手撸XML（人话：通过“</”之类的关键字做切割，不保证从右向左的语言输出的正确性），她把分好的内容放在了directive_dict中，包含“点（node）”“线（way）”“关系（relation）”三类，里面长这样：
 
 ```python
 {"node": {

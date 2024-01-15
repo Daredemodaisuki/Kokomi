@@ -1,18 +1,13 @@
+↑ 已是尽头
+[↓ 海染砗磲 · 查询语句基础](https://github.com/Daredemodaisuki/Kokomi/blob/main/docs/2%20-%20QL%20with%20OceanHuedClam.md)
+
 ## Ⅰ 开始
 
-### 1.Kokomi暂时不需要其他的三方库，欲邀请Kokomi，请：
+Kokomi暂时不需要其他的三方库，欲邀请Kokomi及各附属，请：
 
 ```python
-from src.Kokomi.main import Kokomi
+from src.Kokomi.main import *
 ```
-
-### 2.当然请不要忘记带上她心爱的海染砗磲【OceanHuedClam（QL语句）】和：
-
-```python
-from src.Kokomi.main import OceanHuedClam
-```
-
-ℹ 这是现阶段的，后续合并了就只用 import Kokomi 了。
 
 ### 3.请赋予Kokomi在你的文件的中一个化身：
 
@@ -133,4 +128,5 @@ for nodeID in waifu.directive_dict.get("node")[nodeID]:
 
 线和关系比点额外多出一些内容：线的内容中有构成其的拐点的ID，关系包含组成其的成员类型、ID和在关系中的角色，可以按照读取tag类似的方法实现，但注意，关系的member_dict中的字典ID是成员类型和ID（数字）的组合。
 
+↑ 已是尽头
 [↓ 海染砗磲 · 查询语句基础](https://github.com/Daredemodaisuki/Kokomi/blob/main/docs/2%20-%20QL%20with%20OceanHuedClam.md)

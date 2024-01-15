@@ -268,3 +268,16 @@ waifu.query(Q1)
     + 每一项均为str：一个QL语句；
 
   ℹ：一般地，此方法返回的list应该只包含一个元素，但当使用前面的方法时遇到需要Kokomi分次查询的情况，此处会有多个元素。
+
+  示例：
+
+```python
+result = OceanHuedClam("nwr").key_value("name", "=", "粮站院内").convert()
+```
+
+  得到:
+
+```python
+['nwr["name"="粮站院内"];']
+```
+

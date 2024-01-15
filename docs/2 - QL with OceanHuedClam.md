@@ -33,15 +33,15 @@ Q1 = OceanHuedClam("nwr")
 然后，对要查询的内容做限定，海染砗磲（QL语句）类有如下一些方法，其中部分方法需要与其他海染砗磲（QL语句）对象一并使用，见后：
 
 ```python
-def key_value(self, key: str, relation: str, value: str = "") -> 'OceanHuedClam'
-def around(self, set_point: (str or list), r: int) -> 'OceanHuedClam'
-def id(self, directive_id: (int or str or list), id_opreation: str = "=") -> 'OceanHuedClam'
-def set_bbox(self, E: int, S: int, W: int, N: int) -> 'OceanHuedClam'
-def located_in(self, poly_list: list) -> 'OceanHuedClam'
-----------
-def include_OceanHuedClam(self, set_name: str, the_set: 'OceanHuedClam') -> 'OceanHuedClam'
-def set_from(self, set_name: (str or list)) -> 'OceanHuedClam'
-def extend(self, direction: str, set_name: str = "_") -> 'OceanHuedClam'
+· def key_value(self, key: str, relation: str, value: str = "") -> 'OceanHuedClam'
+· def around(self, set_point: (str or list), r: int) -> 'OceanHuedClam'
+· def id(self, directive_id: (int or str or list), id_opreation: str = "=") -> 'OceanHuedClam'
+· def set_bbox(self, E: int, S: int, W: int, N: int) -> 'OceanHuedClam'
+· def located_in(self, poly_list: list) -> 'OceanHuedClam'
+# ----------
+· def include_OceanHuedClam(self, set_name: str, the_set: 'OceanHuedClam') -> 'OceanHuedClam'
+· def set_from(self, set_name: (str or list)) -> 'OceanHuedClam'
+· def extend(self, direction: str, set_name: str = "_") -> 'OceanHuedClam'
 ...
 ```
 

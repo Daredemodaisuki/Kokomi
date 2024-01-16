@@ -22,7 +22,7 @@ class OceanHuedClam:
     def op(self, op: str, para1=None, para2=None, para3=None):
         op_element = None
         match op:
-            # 不可变位置操作 normal / 可变位置操作 movable / 独立操作 end
+            # 不可变位置操作 normal / 可变位置操作 movable / 独立操作 unique
             case "TPE":  # __init__ -> main_type  # 不可变位置操作（开始）
                 #                   ↓nwr_type
                 op_element = {"TPE": [para1]}  # 这个貌似不用？
@@ -177,6 +177,8 @@ class OceanHuedClam:
         print(print_dict[0x0100].format(set=set_name))
         return self
 
+    # 输出相关内容
+
     # TODO:判断要几个查询，并把要查询的内容返回出去，以便外部查询，step=已经进行了几步，不重复执行
     def how_many_query(self, step: int = 0) -> list:
         # TODO:添加flag_dict以便Kokomi本地筛选
@@ -247,7 +249,7 @@ class OceanHuedClam:
         elif op in movable_op_list:
             op_type = "movable"
         else:
-            op_type = "end"
+            op_type = "unique"
         return op_type
 
     def convert_new(self, set_name: str = "", if_main: bool = True, outputed_list=None) -> list:
@@ -269,6 +271,7 @@ class OceanHuedClam:
                 # 合并how_many_query()至convert前：result += self.__include_dict[include].convert(include, False, outputed)
                 outputed.append(include)
                 # print("INFO: OceanHuedClam " + include + " is printed.\n信息：所装备的「海染砗磲」“" + include + "”已打印。\n")
+
         # 正式数据开始
         # 要求：除了可变位置操作，其余操作可以乱序，所以先寻找需要终止的操作并分段 -> [不可变, 不可变, ..., 不可变（最后一个）/可变]
         op_segment_list = []
@@ -290,16 +293,73 @@ class OceanHuedClam:
                 now_op_type = this_op_type
         # 最后一段（前面for循环寻到最后一段因为没有变化不会直接添加，for完成之后this_op_type即是最后一个的、最后一段的type）
         op_segment_list.append([this_op_type, self.__op_list[op_start:len(self.__op_list)]])
+
+        # 判断是下列哪种情况，并重组：
+        #   纯不可变位置操作：type.A(other_conditionL)[k_v](other_conditionR)->.B;
+        #   纯独立操作：type(id)->.B;
+        #   不可变位置操作+可变位置操作：type.A(other_conditionL)[k_v](other_conditionR)->.B;.B < ->.C;
+        #   独立操作+可变位置操作：type(id)->.A;.A < ->.B;
+        # 上述句法只有最后一个集合名称是convert的set_name参数
+        '''==下面一部分基于 New Bing 写的（偷懒）==
+
+        在python中，有1个列表，里面包含多个数字，现在<1的数字属于A类，1~10之间的属于B类，>10的属于C类，
+        如果希望分割该列表为数个列表，每个分出的子列表均满足下列4种条件之一：
+        1）子列表全部由A类数字组成；
+        2）子列表全部由B类数字组成；
+        3）子列表最后一项为C类，其余全部由A类数字组成；
+        4）子列表最后一项为C类，其余全部由B类数字组成，
+        可以如何分割？
+        
+        def split_list(lst):
+            result = []
+              temp = []
+        for i in lst:
+            if i < 1:
+                temp.append(i)
+            elif 1 <= i <= 10:
+                temp.append(i)
+            else:
+                temp.append(i)
+                result.append(temp)
+                temp = []
+        if temp:
+            result.append(temp)
+        return result
+        
+        整挺好，但可能会出现A、B类数字混合在一起的情况，故还需要添加判断是否同temp前一项相同
+        '''
+        result_list = []
+        result_temp = []
         for op_segment in op_segment_list:
             print(op_segment)
-            # 纯不可变位置操作：type.A(other_conditionL)[k_v](other_conditionR)->.B;
-            # 纯独立操作：type(id)->.B;
-            # 不可变位置操作+可变位置操作：type.A(other_conditionL)[k_v](other_conditionR)->.B;.B < ->.C;
-            # 独立操作+可变位置操作：type(id)->.A;.A < ->.B;
-            # 上述句法只有最后一个集合名称是convert的set_name参数
-            '''
+            if op_segment[0] == "start" or op_segment[0] == "normal":
+                # 跟temp上一个一不一样，不一样就把之前一样的temp甩给result_list，刷新temp，否则在temp添加op
+                if result_temp and (result_temp[-1][0] == "start" or result_temp[-1][0] == "normal"):
+                    result_temp.append(op_segment)
+                else:
+                    if result_temp:
+                        result_list.append(result_temp)
+                    result_temp = [op_segment]
+            elif op_segment[0] == "unique":
+                if result_temp and result_temp[-1][0] == "unique":
+                    result_temp.append(op_segment)
+                else:
+                    if result_temp:
+                        result_list.append(result_temp)
+                    result_temp = [op_segment]
+            else:
+                result_temp.append(op_segment)
+                result_list.append(result_temp)
+                result_temp = []
+        if result_temp:
+            result_list.append(result_temp)
+        print(" ")
+        for x in result_list:
+            print(x)
+
+        '''
             match op:
-            # 不可变位置操作 normal / 可变位置操作 movable / 独立操作 end
+            # 不可变位置操作 normal / 可变位置操作 movable / 独立操作 unique
             case "TPE":  # __init__ -> main_type  # 不可变位置操作
                 #                   ↓nwr_type
                 op_element = {"TPE": [para1]}  # 这个貌似不用？
@@ -331,7 +391,7 @@ class OceanHuedClam:
                 #                   ↓name, set
                 op_element = {"ICL": [para1, para2]}  # 这个貌似不用？
             '''
-            '''if list(op_segment[0].keys())[0] not in movable_op_list:
+        '''if list(op_segment[0].keys())[0] not in movable_op_list:
                 result_info = self.__main_type'''
 
     # 仅在输出时指定的要素集名称（"...->.set_name"）；有引用的情况下，输出本「海染砗磲」时可在声明引用阶段一层一层往回带；

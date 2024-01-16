@@ -22,31 +22,35 @@ class OceanHuedClam:
     def op(self, op: str, para1=None, para2=None, para3=None):
         op_element = None
         match op:
-            case "TPE":  # __init__ -> main_type
+            # 不可变位置操作 normal / 可变位置操作 movable / 独立操作 end
+            case "TPE":  # __init__ -> main_type  # 不可变位置操作
                 #                   ↓nwr_type
                 op_element = {"TPE": [para1]}  # 这个貌似不用？
-            case "K_V":  # key_value -> kv_dict  # or列表，列表元素若是列表，则其为and
+            case "K_V":  # key_value -> kv_dict  # 不可变位置操作  # or列表，列表元素若是列表，则其为and
                 #                   ↓key, relation, value
                 op_element = {"K_V": [para1, para2, para3]}
-            case "ARD":  # around -> around_dict
+            case "ARD":  # around -> around_dict  # 不可变位置操作
                 #                   ↓set/points, set_point, r
                 op_element = {"ARD": [para1, para2, para3]}
-            case "SET":  # set_from -> from_OceanHuedClam_list
+            case "SET":  # set_from -> from_OceanHuedClam_list  # 不可变位置操作
                 #                   ↓and/or, set_name
                 op_element = {"SET": [para1, para2]}
-            case "BOX":  # global_bbox_list  # 南、西、北、东
+            case "BOX":  # set_bbox -> global_bbox_list  # 不可变位置操作  # 南、西、北、东
                 #                   ↓[S, W, N, E]
                 op_element = {"BOX": [para1]}
             case "RCS":  # extend -> recurse_dict  # 可变位置操作
                 #                   ↓set_name, direction
                 op_element = {"RCS": [para1, para2]}
-            case "ID_":  # id -> id_dict
+            case "IDe":  # id -> id_dict  # 独立操作  # id=
+                #                   ↓id
+                op_element = {"IDe": [para1]}
+            case "IDn":  # id -> id_dict  # 不可变位置操作  # id><
                 #                   ↓id, operation
-                op_element = {"ID_": [para1, para2]}
-            case "POL":  # located_in -> located_in_list
+                op_element = {"IDn": [para1, para2]}
+            case "POL":  # located_in -> located_in_list  # 不可变位置操作
                 #                   ↓poly_list
                 op_element = {"POL": [para1]}
-            case "ICL":  # include_OceanHuedClam -> include_dict
+            case "ICL":  # include_OceanHuedClam -> include_dict  # 不可变位置操作
                 #                   ↓name, set
                 op_element = {"ICL": [para1, para2]}  # 这个貌似不用？
         self.__op_list.append(op_element)
@@ -143,10 +147,16 @@ class OceanHuedClam:
         if isinstance(directive_id, list):
             for x in range(len(directive_id)):
                 self.__id_dict.update({str(directive_id[x]): id_operation})  # TODO:后续删除
-                self.op("ID_", directive_id[x], id_operation)
+                if id_operation == "=":
+                    self.op("IDe", directive_id[x])
+                else:
+                    self.op("IDn", directive_id[x], id_operation)
         else:
             self.__id_dict.update({str(directive_id): id_operation})  # TODO:后续删除
-            self.op("ID_", directive_id, id_operation)
+            if id_operation == "=":
+                self.op("IDe", directive_id)
+            else:
+                self.op("IDn", directive_id, id_operation)
         print(print_dict[0x1114])
         return self
 
@@ -246,22 +256,60 @@ class OceanHuedClam:
                 outputed.append(include)
                 # print("INFO: OceanHuedClam " + include + " is printed.\n信息：所装备的「海染砗磲」“" + include + "”已打印。\n")
         # 正式数据开始
-        # 要求：除了可变位置操作，其余操作可以乱序，所以先寻找需要终止的操作并分段
-        end_op_list = ["RCS"]
+        # 要求：除了可变位置操作，其余操作可以乱序，所以先寻找需要终止的操作并分段 -> [不可变, 不可变, ..., 不可变（最后一个）/可变]
+        movable_op_list = ["RCS"]
+        end_op_list = ["IDe"]
         op_segment_list = []
         op_start = 0
         op_end = 0
         for x in range(len(self.__op_list)):
             op = list(self.__op_list[x].keys())[0]
             print(op, self.__op_list[x][op])
-            if op in end_op_list:
+            if op in movable_op_list or op in end_op_list:
                 op_end = x  # 找到结束位置
-                op_segment_list.append(self.__op_list[op_start: op_end + 1])
-                op_start = x + 1  # 将（下一次）开始位置设置为本次结束位置
+                if op in movable_op_list:
+                    op_segment_list.append(self.__op_list[op_start: op_end + 1])
+                    op_start = x + 1  # 将（下一次）开始位置设置为本次结束位置
+                else:
+                    op_segment_list.append(self.__op_list[op_start: op_end])
+                    op_segment_list.append([self.__op_list[op_end]])
+                    op_start = x + 1 # 将（下一次）开始位置设置为本次结束位置
         op_segment_list.append(self.__op_list[op_start:len(self.__op_list)])  # 最后一段
-        for x in op_segment_list:
-            print(x)
-
+        for op_segment in op_segment_list:
+            print(op_segment)
+            # 纯不可变位置操作（type.A(other_condition)[k_v](if)->.B;）
+            '''
+            match op:
+            case "TPE":  # __init__ -> main_type  # 不可变位置操作
+                #                   ↓nwr_type
+                op_element = {"TPE": [para1]}  # 这个貌似不用？
+            case "K_V":  # key_value -> kv_dict  # 不可变位置操作  # or列表，列表元素若是列表，则其为and
+                #                   ↓key, relation, value
+                op_element = {"K_V": [para1, para2, para3]}
+            case "ARD":  # around -> around_dict  # 不可变位置操作
+                #                   ↓set/points, set_point, r
+                op_element = {"ARD": [para1, para2, para3]}
+            case "SET":  # set_from -> from_OceanHuedClam_list  # 不可变位置操作
+                #                   ↓and/or, set_name
+                op_element = {"SET": [para1, para2]}
+            case "BOX":  # set_bbox -> global_bbox_list  # 不可变位置操作  # 南、西、北、东
+                #                   ↓[S, W, N, E]
+                op_element = {"BOX": [para1]}
+            case "RCS":  # extend -> recurse_dict  # 可变位置操作
+                #                   ↓set_name, direction
+                op_element = {"RCS": [para1, para2]}
+            case "ID_":  # id -> id_dict  # 不可变位置操作
+                #                   ↓id, operation
+                op_element = {"ID_": [para1, para2]}
+            case "POL":  # located_in -> located_in_list  # 不可变位置操作
+                #                   ↓poly_list
+                op_element = {"POL": [para1]}
+            case "ICL":  # include_OceanHuedClam -> include_dict  # 不可变位置操作
+                #                   ↓name, set
+                op_element = {"ICL": [para1, para2]}  # 这个貌似不用？
+            '''
+            if list(op_segment[-1].keys())[0] not in movable_op_list:
+                result_info = self.__main_type
 
     # 仅在输出时指定的要素集名称（"...->.set_name"）；有引用的情况下，输出本「海染砗磲」时可在声明引用阶段一层一层往回带；
     # 输出QL语句列表

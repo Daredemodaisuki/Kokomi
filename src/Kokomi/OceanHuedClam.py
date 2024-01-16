@@ -381,40 +381,8 @@ class OceanHuedClam:
             op_group_list[0] = new_op_group_list[0][0:len(new_op_group_list[0]) - 1]
 
         # 对每个op组的每个op段按别不可变位置、可变位置、独立操作开刀
-        '''
-        match op:
-            # 不可变位置操作 normal / 可变位置操作 movable / 独立操作 unique
-            case "TPE":  # __init__ -> main_type  # 不可变位置操作
-                #                   ↓nwr_type
-                op_element = {"TPE": [para1]}  # 这个貌似不用？
-            case "K_V":  # key_value -> kv_dict  # 不可变位置操作  # or列表，列表元素若是列表，则其为and
-                #                   ↓key, relation, value
-                op_element = {"K_V": [para1, para2, para3]}
-            case "ARD":  # around -> around_dict  # 不可变位置操作
-                #                   ↓set/points, set_point, r
-                op_element = {"ARD": [para1, para2, para3]}
-            case "SET":  # set_from -> from_OceanHuedClam_list  # 不可变位置操作
-                #                   ↓and/or, set_name
-                op_element = {"SET": [para1, para2]}
-            case "BOX":  # set_bbox -> global_bbox_list  # 不可变位置操作  # 南、西、北、东
-                #                   ↓[S, W, N, E]
-                op_element = {"BOX": [para1]}
-            case "RCS":  # extend -> recurse_dict  # 可变位置操作
-                #                   ↓set_name, direction
-                op_element = {"RCS": [para1, para2]}
-            case "IDe":  # id -> id_dict  # 独立操作  # id=
-                #                   ↓id
-                op_element = {"IDe": [para1]}
-            case "IDn":  # id -> id_dict  # 不可变位置操作  # id><
-                #                   ↓id, operation
-                op_element = {"IDn": [para1, para2]}
-            case "POL":  # located_in -> located_in_list  # 不可变位置操作
-                #                   ↓poly_list
-                op_element = {"POL": [para1]}
-            case "ICL":  # include_OceanHuedClam -> include_dict  # 不可变位置操作
-                #                   ↓name, set
-                op_element = {"ICL": [para1, para2]}  # 这个貌似不用？
-        '''
+        # TODO:独立操作
+
         #   纯不可变位置操作段：type.A(other_conditionL)[k_v](other_conditionR)->.B;
         #   纯独立操作段：type(id)->.B;
         #   不可变位置操作段+可变位置操作段：type.A(other_conditionL)[k_v](other_conditionR)->.B;.B < ->.C;
@@ -443,6 +411,7 @@ class OceanHuedClam:
             for op_segment in op_group:
                 if isinstance(op_segment, str):
                     # TODO:使得临时中间集合名称随机
+                    # TODO:传递中间集合名称还有问题，检查具体谁传谁咋传
                     # 不动op组的第一项：组类型
                     # 如果这组是normal+movable，下组是normal，要传一个临时集合名，否则
                     # Q1 = OceanHuedClam("nwr").key_value("place", "=", "city").extend("<").located_in([1,1,4,5])
@@ -469,7 +438,7 @@ class OceanHuedClam:
                     if op_segment == "normal" or op_segment == "normal+movable":
                         if op_group_list.index(op_group) > 0 and \
                                 op_group_list[op_group_list.index(op_group) - 1][0] == "normal+movable":
-                            temp_set_name2 = copy.deepcopy(temp_set_name_dict["N+M→N(+M)的N→M"])
+                            temp_set_name1 = copy.deepcopy(temp_set_name_dict["N+M→N(+M)的N→M"])
                             # print("<-1", temp_set_name2)
                             # temp_set_name_dict["N+M→N(+M)的N→M"] = ""
                             before_nor = True
@@ -635,6 +604,7 @@ class OceanHuedClam:
                             # print("<-4",group_end , temp_set_name1)
                             # 一个海染最后一个段必须导去指定的set_name
                             if group_end == True:
+                                # print(temp_set_name1)
                                 temp_set_name1 = set_name
                             if set_name != "" and temp_set_name1 != "":
                                 group_result_info += "->." + temp_set_name1
@@ -666,6 +636,7 @@ class OceanHuedClam:
                                 if recurse_dict:
                                     # print(temp_set_name1) -> 传过来了的，有
                                     if next_nor == True:  # 沿用本组第一段的名字
+                                        # print(temp_set_name1)
                                         set_name_rec = temp_set_name1
                                     else:
                                         set_name_rec = set_name
@@ -678,11 +649,13 @@ class OceanHuedClam:
                                             recurse_info += "." + set_name_rec + recurse_dict[recurse_set]
                                     a = 0
                                     # ->.set
+                                    # print(next_nor, temp_set_name2)
                                     if next_nor == True:  # 给下一组第一段的名字
                                         temp_set_name2 = "temp" + str(hash(group_result_info))[0:4]
                                         temp_set_name_dict.update({"N+M→N(+M)的M→N": temp_set_name2})
                                         # print("aaaaaaaaaaaaaaaaaa", set_name, temp_set_name2)
                                     # 但是一个海染最后一个段必须导去指定的set_name
+                                    # print(group_end)
                                     if group_end == True:
                                         temp_set_name2 = ""
                                     if set_name != "" and temp_set_name2 != "":

@@ -16,6 +16,28 @@ class OceanHuedClam:
         self.__id_dict = {}
         self.__recurse_dict = {}
         self.__located_in_list = []
+        self.__op_list = []
+
+    def op(self, op: str, para1 = None, para2 = None, para3 = None):
+        op_element = None
+        match op:
+            case "K_V":  # key_value -> kv_dict  # or列表，列表元素若是列表，则其为and
+                op_element = {"K_V", para1, para2, para3}
+            case "ARD":  # around -> around_dict
+                op_element = {"ARD", para1, para2}
+            case "SET":  # set_from -> from_OceanHuedClam_list
+                op_element = {"SET", para1}
+            case "BOX":  # global_bbox_list  # 南、西、北、东
+                op_element = {"BOX", para1}
+            case "RCS":  # extend -> recurse_dict
+                op_element = {"RCS", para1, para2}
+            case "ID_":  # id -> id_dict
+                op_element = {"ID_", para1, para2}
+            case "LIN":  # located_in -> located_in_list
+                op_element = {"LIN", para1}
+            case "ICL":  # include_OceanHuedClam -> include_dict
+                op_element = {"ICL", para1}  # 这个貌似不用？
+        self.__op_list.append(op_element)
 
     # 海染砗磲（QL语句）之键值关系限制语句：限定查询主体的key与value。
     #   参数1为【限定键，str】：限定必须出现或有对应值要求的键；

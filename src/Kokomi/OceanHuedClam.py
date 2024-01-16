@@ -268,7 +268,7 @@ class OceanHuedClam:
             # 如果事先已经打印了，就不重复打印，防止A->B;A,B->C中打印两次A
             if include not in outputed:
                 # TODO:converted_list = ...；暂时先全部放一起，前置条件要不要分开怎么分开再想想
-                for x in self.__include_dict[include].convert(include, False, outputed):
+                for x in self.__include_dict[include].convert_new(include, False, outputed):
                     include_info += x
                 # 合并how_many_query()至convert前：result += self.__include_dict[include].convert(include, False, outputed)
                 outputed.append(include)
@@ -487,7 +487,32 @@ class OceanHuedClam:
                                     from_info += "." + x
                             group_result_info += from_info
                         else:  # 并集：前面把并集写出来了，现在缀到type后面
-                            group_result_info += "." + temp_set_name
+                            if from_OceanHuedClam_list:
+                                group_result_info += "." + temp_set_name
+
+                        # around
+                        if around_dict:
+                            around_info = "(around."
+                            for around in around_dict:
+                                # 要素集{set_point: r}；点串线{r: set_point}
+                                if isinstance(around, str):
+                                    around_info += around + ":" + str(
+                                        around_dict[around]) + ")"
+                                else:
+                                    around_info += ":" + str(around)
+                                    for point in around_dict[around]:
+                                        around_info += "," + str(point)
+                                    around_info += ")"
+                            group_result_info += around_info
+
+                        # poly
+                        if located_in_list:
+                            poly_info = "(poly:\""
+                            for x in range(len(located_in_list) - 1):
+                                poly_info += str(located_in_list[x]) + " "
+                            poly_info += str(
+                                located_in_list[len(located_in_list) - 1]) + "\")"
+                            group_result_info += poly_info
 
                         # k_v
                         if kv_dict:
@@ -520,7 +545,10 @@ class OceanHuedClam:
                                 kv_info += now_info
                             group_result_info += kv_info
 
-                            group_result_info += ";"
+                        # ->.set
+                        if set_name != "":
+                            group_result_info += "->." + set_name
+                        group_result_info += ";"
                         print("op-group:", op_group, "\n>>>", group_result_info)
 
                     case "":

@@ -54,14 +54,16 @@ op-group: [['normal', [{'TPE': ['nwr']}, {'K_V': ['name:zh', '=', '北京市']},
 >>> nwr["name:zh"="北京市"][!"highway"]["name:en"]
 '''
 
-# 测试3：from
+# 测试3：from、around
 print("=====================")
-Q1 = OceanHuedClam("nwr").key_value("name:zh", "v-reg", "北京市").key_value("name:en", "exist")
+Q1 = OceanHuedClam("nwr").key_value("name:zh", "v-reg", "北京市").key_value("name:en", "exist").located_in([1,1,4,5,1,4])
 # Q1.convert_new()
-Q2 = OceanHuedClam("nwr").key_value("highway", "!exist")
+Q2 = OceanHuedClam("nwr").key_value("highway", "!exist").include_OceanHuedClam("Q1", Q1).set_from("Q1")
 # Q2.convert_new()
 Q3 = OceanHuedClam("nwr").include_OceanHuedClam("Q1", Q1).include_OceanHuedClam("Q2", Q2).set_from("Q1").set_from("Q2")
-print(Q3.convert_new())
+print("※ Q3 >>>", Q3.convert_new())
+Q4 = OceanHuedClam("nwr").include_OceanHuedClam("Q3", Q3).around("Q3", 100)
+print("※ Q4 >>>", Q4.convert_new())
 
 '''
 【成功】
@@ -69,13 +71,54 @@ print(Q3.convert_new())
 INFO: OceanHuedClam  Q1  is included.
 信息：「海染砗磲」“Q1”已装备。
 
+INFO: OceanHuedClam  Q1  is included.
+信息：「海染砗磲」“Q1”已装备。
+
 INFO: OceanHuedClam  Q2  is included.
 信息：「海染砗磲」“Q2”已装备。
 
 ['start', [{'TPE': ['nwr']}]]
-['normal', [{'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x00000237A08A37D0>]}, {'ICL': ['Q2', <OceanHuedClam.OceanHuedClam object at 0x00000237A08A3750>]}, {'SET': ['or', 'Q1']}, {'SET': ['or', 'Q2']}]]
-[['normal', [{'TPE': ['nwr']}, {'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x00000237A075E9D0>]}, {'ICL': ['Q2', <OceanHuedClam.OceanHuedClam object at 0x00000237A075EAD0>]}, {'SET': ['or', 'Q1']}, {'SET': ['or', 'Q2']}]]]
-op-group: [['normal', [{'TPE': ['nwr']}, {'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x00000237A075E9D0>]}, {'ICL': ['Q2', <OceanHuedClam.OceanHuedClam object at 0x00000237A075EAD0>]}, {'SET': ['or', 'Q1']}, {'SET': ['or', 'Q2']}]]] 
->>> (nwr.Q1;nwr.Q2;)->.temp-265;nwr.temp-265
-['nwr["name:zh"~"北京市"]["name:en"]->.Q1;nwr[!"highway"]->.Q2;(nwr.Q1;nwr.Q2;)->.temp-265;nwr.temp-265']
+['normal', [{'K_V': ['name:zh', 'v-reg', '北京市']}, {'K_V': ['name:en', 'exist', '']}, {'POL': [[1, 1, 4, 5, 1, 4]]}]]
+[['normal', [{'TPE': ['nwr']}, {'K_V': ['name:zh', 'v-reg', '北京市']}, {'K_V': ['name:en', 'exist', '']}, {'POL': [[1, 1, 4, 5, 1, 4]]}]]]
+{'name:zh': {'value': '北京市', 'relation': 'v-reg'}, 'name:en': {'value': '', 'relation': 'exist'}}
+op-group: [['normal', [{'TPE': ['nwr']}, {'K_V': ['name:zh', 'v-reg', '北京市']}, {'K_V': ['name:en', 'exist', '']}, {'POL': [[1, 1, 4, 5, 1, 4]]}]]] 
+>>> nwr(poly:"1 1 4 5 1 4")["name:zh"~"北京市"]["name:en"]->.Q1;
+['start', [{'TPE': ['nwr']}]]
+['normal', [{'K_V': ['highway', '!exist', '']}, {'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x0000028D6662FDD0>]}, {'SET': ['or', 'Q1']}]]
+[['normal', [{'TPE': ['nwr']}, {'K_V': ['highway', '!exist', '']}, {'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x0000028D66640150>]}, {'SET': ['or', 'Q1']}]]]
+{'highway': {'value': '', 'relation': '!exist'}}
+op-group: [['normal', [{'TPE': ['nwr']}, {'K_V': ['highway', '!exist', '']}, {'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x0000028D66640150>]}, {'SET': ['or', 'Q1']}]]] 
+>>> nwr.Q1[!"highway"]->.Q2;
+['start', [{'TPE': ['nwr']}]]
+['normal', [{'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x0000028D6662FDD0>]}, {'ICL': ['Q2', <OceanHuedClam.OceanHuedClam object at 0x0000028D6662FFD0>]}, {'SET': ['or', 'Q1']}, {'SET': ['or', 'Q2']}]]
+[['normal', [{'TPE': ['nwr']}, {'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x0000028D66640210>]}, {'ICL': ['Q2', <OceanHuedClam.OceanHuedClam object at 0x0000028D66640250>]}, {'SET': ['or', 'Q1']}, {'SET': ['or', 'Q2']}]]]
+op-group: [['normal', [{'TPE': ['nwr']}, {'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x0000028D66640210>]}, {'ICL': ['Q2', <OceanHuedClam.OceanHuedClam object at 0x0000028D66640250>]}, {'SET': ['or', 'Q1']}, {'SET': ['or', 'Q2']}]]] 
+>>> (nwr.Q1;nwr.Q2;)->.temp2950;nwr.temp2950;
+※ Q3 >>> ['nwr(poly:"1 1 4 5 1 4")["name:zh"~"北京市"]["name:en"]->.Q1;nwr.Q1[!"highway"]->.Q2;(nwr.Q1;nwr.Q2;)->.temp2950;nwr.temp2950;']
+INFO: OceanHuedClam  Q3  is included.
+信息：「海染砗磲」“Q3”已装备。
+
+['start', [{'TPE': ['nwr']}]]
+['normal', [{'K_V': ['name:zh', 'v-reg', '北京市']}, {'K_V': ['name:en', 'exist', '']}, {'POL': [[1, 1, 4, 5, 1, 4]]}]]
+[['normal', [{'TPE': ['nwr']}, {'K_V': ['name:zh', 'v-reg', '北京市']}, {'K_V': ['name:en', 'exist', '']}, {'POL': [[1, 1, 4, 5, 1, 4]]}]]]
+{'name:zh': {'value': '北京市', 'relation': 'v-reg'}, 'name:en': {'value': '', 'relation': 'exist'}}
+op-group: [['normal', [{'TPE': ['nwr']}, {'K_V': ['name:zh', 'v-reg', '北京市']}, {'K_V': ['name:en', 'exist', '']}, {'POL': [[1, 1, 4, 5, 1, 4]]}]]] 
+>>> nwr(poly:"1 1 4 5 1 4")["name:zh"~"北京市"]["name:en"]->.Q1;
+['start', [{'TPE': ['nwr']}]]
+['normal', [{'K_V': ['highway', '!exist', '']}, {'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x0000028D6662FDD0>]}, {'SET': ['or', 'Q1']}]]
+[['normal', [{'TPE': ['nwr']}, {'K_V': ['highway', '!exist', '']}, {'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x0000028D66640610>]}, {'SET': ['or', 'Q1']}]]]
+{'highway': {'value': '', 'relation': '!exist'}}
+op-group: [['normal', [{'TPE': ['nwr']}, {'K_V': ['highway', '!exist', '']}, {'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x0000028D66640610>]}, {'SET': ['or', 'Q1']}]]] 
+>>> nwr.Q1[!"highway"]->.Q2;
+['start', [{'TPE': ['nwr']}]]
+['normal', [{'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x0000028D6662FDD0>]}, {'ICL': ['Q2', <OceanHuedClam.OceanHuedClam object at 0x0000028D6662FFD0>]}, {'SET': ['or', 'Q1']}, {'SET': ['or', 'Q2']}]]
+[['normal', [{'TPE': ['nwr']}, {'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x0000028D666406D0>]}, {'ICL': ['Q2', <OceanHuedClam.OceanHuedClam object at 0x0000028D66640790>]}, {'SET': ['or', 'Q1']}, {'SET': ['or', 'Q2']}]]]
+op-group: [['normal', [{'TPE': ['nwr']}, {'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x0000028D666406D0>]}, {'ICL': ['Q2', <OceanHuedClam.OceanHuedClam object at 0x0000028D66640790>]}, {'SET': ['or', 'Q1']}, {'SET': ['or', 'Q2']}]]] 
+>>> (nwr.Q1;nwr.Q2;)->.temp2950;nwr.temp2950->.Q3;
+['start', [{'TPE': ['nwr']}]]
+['normal', [{'ICL': ['Q3', <OceanHuedClam.OceanHuedClam object at 0x0000028D66548210>]}, {'ARD': ['set', 'Q3', 100]}]]
+[['normal', [{'TPE': ['nwr']}, {'ICL': ['Q3', <OceanHuedClam.OceanHuedClam object at 0x0000028D66640910>]}, {'ARD': ['set', 'Q3', 100]}]]]
+op-group: [['normal', [{'TPE': ['nwr']}, {'ICL': ['Q3', <OceanHuedClam.OceanHuedClam object at 0x0000028D66640910>]}, {'ARD': ['set', 'Q3', 100]}]]] 
+>>> nwr(around.Q3:100);
+※ Q4 >>> ['nwr(poly:"1 1 4 5 1 4")["name:zh"~"北京市"]["name:en"]->.Q1;nwr.Q1[!"highway"]->.Q2;(nwr.Q1;nwr.Q2;)->.temp2950;nwr.temp2950->.Q3;nwr(around.Q3:100);']
 '''

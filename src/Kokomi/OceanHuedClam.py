@@ -7,23 +7,23 @@ from global_ import print_dict
 # 海染砗磲（QL语句）：查询要素的条件，条件取上名称后就代表符合该条件的要素集。
 class OceanHuedClam:
     def __init__(self, nwr_type: str):
+        self.__op_list = []
         self.__include_dict = {}  # TODO:这个保留，其他逐步调整至convert中
         self.__from_OceanHuedClam_list = []  # or列表，列表元素若是列表，则其为and
         self.__main_type = nwr_type
-        # self.op("TPE", nwr_type)
+        self.op("TPE", nwr_type)
         self.__kv_dict = {}
         self.__around_dict = {}
         self.__global_bbox_list = []  # 南、西、北、东
         self.__id_dict = {}
         self.__recurse_dict = {}
         self.__located_in_list = []
-        self.__op_list = []
 
     def op(self, op: str, para1=None, para2=None, para3=None):
         op_element = None
         match op:
             # 不可变位置操作 normal / 可变位置操作 movable / 独立操作 end
-            case "TPE":  # __init__ -> main_type  # 不可变位置操作
+            case "TPE":  # __init__ -> main_type  # 不可变位置操作（开始）
                 #                   ↓nwr_type
                 op_element = {"TPE": [para1]}  # 这个貌似不用？
             case "K_V":  # key_value -> kv_dict  # 不可变位置操作  # or列表，列表元素若是列表，则其为and
@@ -236,6 +236,20 @@ class OceanHuedClam:
             query_list.append(self)
         return query_list
 
+    def __op_type(self, op: str) -> str:
+        movable_op_list = ["RCS"]
+        end_op_list = ["IDe"]
+        start_op_list = ["TPE"]
+        if not (op in movable_op_list or op in end_op_list or op in start_op_list):
+            op_type = "normal"
+        elif op in start_op_list:
+            op_type = "start"
+        elif op in movable_op_list:
+            op_type = "movable"
+        else:
+            op_type = "end"
+        return op_type
+
     def convert_new(self, set_name: str = "", if_main: bool = True, outputed_list=None) -> list:
         # 如果这个是主语句，最外层的，那么outputed列表应该清空
         if outputed_list is None:
@@ -257,29 +271,35 @@ class OceanHuedClam:
                 # print("INFO: OceanHuedClam " + include + " is printed.\n信息：所装备的「海染砗磲」“" + include + "”已打印。\n")
         # 正式数据开始
         # 要求：除了可变位置操作，其余操作可以乱序，所以先寻找需要终止的操作并分段 -> [不可变, 不可变, ..., 不可变（最后一个）/可变]
-        movable_op_list = ["RCS"]
-        end_op_list = ["IDe"]
         op_segment_list = []
         op_start = 0
         op_end = 0
+        this_op_type = "start"
+        now_op_type = "start"
+        same_type_op_list = []
         for x in range(len(self.__op_list)):
+            # 提取op标识符
             op = list(self.__op_list[x].keys())[0]
             print(op, self.__op_list[x][op])
-            if op in movable_op_list or op in end_op_list:
-                op_end = x  # 找到结束位置
-                if op in movable_op_list:
-                    op_segment_list.append(self.__op_list[op_start: op_end + 1])
-                    op_start = x + 1  # 将（下一次）开始位置设置为本次结束位置
-                else:
-                    op_segment_list.append(self.__op_list[op_start: op_end])
-                    op_segment_list.append([self.__op_list[op_end]])
-                    op_start = x + 1 # 将（下一次）开始位置设置为本次结束位置
-        op_segment_list.append(self.__op_list[op_start:len(self.__op_list)])  # 最后一段
+            # 判断op类型
+            this_op_type = self.__op_type(op)
+            if this_op_type != now_op_type:
+                op_end = x  # 找到相同类型op的最后一个，将op类型和同类op添加到段
+                op_segment_list.append([now_op_type, self.__op_list[op_start: op_end]])
+                op_start = x
+                now_op_type = this_op_type
+        # 最后一段（前面for循环寻到最后一段因为没有变化不会直接添加，for完成之后this_op_type即是最后一个的、最后一段的type）
+        op_segment_list.append([this_op_type, self.__op_list[op_start:len(self.__op_list)]])
         for op_segment in op_segment_list:
             print(op_segment)
-            # 纯不可变位置操作（type.A(other_condition)[k_v](if)->.B;）
+            # 纯不可变位置操作：type.A(other_conditionL)[k_v](other_conditionR)->.B;
+            # 纯独立操作：type(id)->.B;
+            # 不可变位置操作+可变位置操作：type.A(other_conditionL)[k_v](other_conditionR)->.B;.B < ->.C;
+            # 独立操作+可变位置操作：type(id)->.A;.A < ->.B;
+            # 上述句法只有最后一个集合名称是convert的set_name参数
             '''
             match op:
+            # 不可变位置操作 normal / 可变位置操作 movable / 独立操作 end
             case "TPE":  # __init__ -> main_type  # 不可变位置操作
                 #                   ↓nwr_type
                 op_element = {"TPE": [para1]}  # 这个貌似不用？
@@ -298,9 +318,12 @@ class OceanHuedClam:
             case "RCS":  # extend -> recurse_dict  # 可变位置操作
                 #                   ↓set_name, direction
                 op_element = {"RCS": [para1, para2]}
-            case "ID_":  # id -> id_dict  # 不可变位置操作
+            case "IDe":  # id -> id_dict  # 独立操作  # id=
+                #                   ↓id
+                op_element = {"IDe": [para1]}
+            case "IDn":  # id -> id_dict  # 不可变位置操作  # id><
                 #                   ↓id, operation
-                op_element = {"ID_": [para1, para2]}
+                op_element = {"IDn": [para1, para2]}
             case "POL":  # located_in -> located_in_list  # 不可变位置操作
                 #                   ↓poly_list
                 op_element = {"POL": [para1]}
@@ -308,8 +331,8 @@ class OceanHuedClam:
                 #                   ↓name, set
                 op_element = {"ICL": [para1, para2]}  # 这个貌似不用？
             '''
-            if list(op_segment[-1].keys())[0] not in movable_op_list:
-                result_info = self.__main_type
+            '''if list(op_segment[0].keys())[0] not in movable_op_list:
+                result_info = self.__main_type'''
 
     # 仅在输出时指定的要素集名称（"...->.set_name"）；有引用的情况下，输出本「海染砗磲」时可在声明引用阶段一层一层往回带；
     # 输出QL语句列表

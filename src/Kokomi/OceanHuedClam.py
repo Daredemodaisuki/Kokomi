@@ -254,6 +254,7 @@ class OceanHuedClam:
 
     def convert_new(self, set_name: str = "", if_main: bool = True, outputed_list=None) -> list:
         # 如果这个是主语句，最外层的，那么outputed列表应该清空
+        temp_set_name = ""
         if outputed_list is None:
             outputed_list = []
         result_info = ""
@@ -408,9 +409,6 @@ class OceanHuedClam:
         for op_group in op_group_list:
             print(op_group)
 
-            # type
-            group_result_info = self.__main_type
-
             # segment_result_info = self.__main_type
             from_OceanHuedClam_list = []  # or列表，列表元素若是列表，则其为and
             # main_type = nwr_type
@@ -420,6 +418,7 @@ class OceanHuedClam:
             id_dict = {}
             recurse_dict = {}
             located_in_list = []
+            group_result_info = ""
             for op_segment in op_group:
                 # 将不可变位置操作段中的信息保存以备输出
                 match op_segment[0]:
@@ -455,41 +454,79 @@ class OceanHuedClam:
                                 case _:
                                     print(print_dict[0x31C0].format(op_id=op_id))
 
-                        # 输出不可变位置操作
+                        # 整体输出不可变位置操作
+
+                        # from_other_set（并集）
+                        if len(from_OceanHuedClam_list) > 1:
+                            from_info = "("
+                            for from_OceanHuedClam in from_OceanHuedClam_list:
+                                if isinstance(from_OceanHuedClam, str):
+                                    from_info += self.__main_type + "." + from_OceanHuedClam + ";"
+                                else:
+                                    from_info += self.__main_type
+                                    for x in from_OceanHuedClam:
+                                        from_info += "." + x
+                                    from_OceanHuedClam += ";"
+                            temp_set_name = "temp" + str(hash(from_info))[0:4]  # 用hash取个名字
+                            from_info += ")->." + temp_set_name + ";"
+                            group_result_info += from_info
+
+                        # type
+                        group_result_info += self.__main_type
+
+                        # from_other_set（单个集合/交集）
+                        if len(from_OceanHuedClam_list) == 1:
+                            from_info = ""
+                            if isinstance(from_OceanHuedClam_list[0], str):
+                                from_info += "." + from_OceanHuedClam_list[0]
+                            else:
+                                if len(from_OceanHuedClam_list[0]) > 1:
+                                    print(print_dict[0x11A0]
+                                          .format(set=(set_name if set_name != "" else "default")))
+                                for x in from_OceanHuedClam_list[0]:
+                                    from_info += "." + x
+                            group_result_info += from_info
+                        else:  # 并集：前面把并集写出来了，现在缀到type后面
+                            group_result_info += "." + temp_set_name
+
                         # k_v
-                        kv_info = ""
-                        print(kv_dict)
-                        for key in kv_dict:
-                            value = kv_dict[key].get("value")
-                            match kv_dict[key].get("relation"):
-                                case "exist":  # 存在key（value可不填）
-                                    now_info = "[\"" + key + "\"]"
-                                case "!exist":  # 不存在key
-                                    now_info = "[!\"" + key + "\"]"
-                                case "=":  # 存在key且对应value匹配
-                                    now_info = "[\"" + key + "\"" + "=\"" + value + "\"]"
-                                case "!=":  # 存在key但对应value不匹配 或 不存在key
-                                    now_info = "[\"" + key + "\"" + "!=\"" + value + "\"]"
-                                case "=!=":  # 必须存在key但对应value不匹配
-                                    now_info = "[\"" + key + "\"][\"" + key + "\"!=\"" + value + "\"]"
-                                case "v-reg":  # v可含正则表达式
-                                    now_info = "[\"" + key + "\"~\"" + value + "\"]"
-                                case "!v-reg":  # v可含正则表达式但不匹配
-                                    now_info = "[\"" + key + "\"!~\"" + value + "\"]"
-                                case "kv-reg":  # kv皆可含正则表达式
-                                    now_info = "[~\"" + key + "\"~\"" + value + "\"]"
-                                case "v-Aa_no_care":  # v可含正则表达式且不分大小写
-                                    now_info = "[~\"" + key + "\"~\"" + value + "\",i]"
-                                case _:
-                                    now_info = ""
-                                    print(print_dict[0x31C1].format(relation=kv_dict[key].get("relation")))
-                            kv_info += now_info
-                        group_result_info += kv_info
+                        if kv_dict:
+                            kv_info = ""
+                            print(kv_dict)
+                            for key in kv_dict:
+                                value = kv_dict[key].get("value")
+                                match kv_dict[key].get("relation"):
+                                    case "exist":  # 存在key（value可不填）
+                                        now_info = "[\"" + key + "\"]"
+                                    case "!exist":  # 不存在key
+                                        now_info = "[!\"" + key + "\"]"
+                                    case "=":  # 存在key且对应value匹配
+                                        now_info = "[\"" + key + "\"" + "=\"" + value + "\"]"
+                                    case "!=":  # 存在key但对应value不匹配 或 不存在key
+                                        now_info = "[\"" + key + "\"" + "!=\"" + value + "\"]"
+                                    case "=!=":  # 必须存在key但对应value不匹配
+                                        now_info = "[\"" + key + "\"][\"" + key + "\"!=\"" + value + "\"]"
+                                    case "v-reg":  # v可含正则表达式
+                                        now_info = "[\"" + key + "\"~\"" + value + "\"]"
+                                    case "!v-reg":  # v可含正则表达式但不匹配
+                                        now_info = "[\"" + key + "\"!~\"" + value + "\"]"
+                                    case "kv-reg":  # kv皆可含正则表达式
+                                        now_info = "[~\"" + key + "\"~\"" + value + "\"]"
+                                    case "v-Aa_no_care":  # v可含正则表达式且不分大小写
+                                        now_info = "[~\"" + key + "\"~\"" + value + "\",i]"
+                                    case _:
+                                        now_info = ""
+                                        print(print_dict[0x31C1].format(relation=kv_dict[key].get("relation")))
+                                kv_info += now_info
+                            group_result_info += kv_info
+
+                            group_result_info += ";"
                         print("op-group:", op_group, "\n>>>", group_result_info)
 
                     case "":
                         group_result_info = ""
             result_info += group_result_info
+        return [result_info]
 
     # 仅在输出时指定的要素集名称（"...->.set_name"）；有引用的情况下，输出本「海染砗磲」时可在声明引用阶段一层一层往回带；
     # 输出QL语句列表

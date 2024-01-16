@@ -53,3 +53,29 @@ Q1 = OceanHuedClam("nwr").key_value("name:zh", "=", "北京市").key_value("high
 op-group: [['normal', [{'TPE': ['nwr']}, {'K_V': ['name:zh', '=', '北京市']}, {'K_V': ['highway', '!exist', '']}, {'K_V': ['name:en', 'exist', '']}]]] 
 >>> nwr["name:zh"="北京市"][!"highway"]["name:en"]
 '''
+
+# 测试3：from
+print("=====================")
+Q1 = OceanHuedClam("nwr").key_value("name:zh", "v-reg", "北京市").key_value("name:en", "exist")
+# Q1.convert_new()
+Q2 = OceanHuedClam("nwr").key_value("highway", "!exist")
+# Q2.convert_new()
+Q3 = OceanHuedClam("nwr").include_OceanHuedClam("Q1", Q1).include_OceanHuedClam("Q2", Q2).set_from("Q1").set_from("Q2")
+print(Q3.convert_new())
+
+'''
+【成功】
+----------
+INFO: OceanHuedClam  Q1  is included.
+信息：「海染砗磲」“Q1”已装备。
+
+INFO: OceanHuedClam  Q2  is included.
+信息：「海染砗磲」“Q2”已装备。
+
+['start', [{'TPE': ['nwr']}]]
+['normal', [{'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x00000237A08A37D0>]}, {'ICL': ['Q2', <OceanHuedClam.OceanHuedClam object at 0x00000237A08A3750>]}, {'SET': ['or', 'Q1']}, {'SET': ['or', 'Q2']}]]
+[['normal', [{'TPE': ['nwr']}, {'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x00000237A075E9D0>]}, {'ICL': ['Q2', <OceanHuedClam.OceanHuedClam object at 0x00000237A075EAD0>]}, {'SET': ['or', 'Q1']}, {'SET': ['or', 'Q2']}]]]
+op-group: [['normal', [{'TPE': ['nwr']}, {'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x00000237A075E9D0>]}, {'ICL': ['Q2', <OceanHuedClam.OceanHuedClam object at 0x00000237A075EAD0>]}, {'SET': ['or', 'Q1']}, {'SET': ['or', 'Q2']}]]] 
+>>> (nwr.Q1;nwr.Q2;)->.temp-265;nwr.temp-265
+['nwr["name:zh"~"北京市"]["name:en"]->.Q1;nwr[!"highway"]->.Q2;(nwr.Q1;nwr.Q2;)->.temp-265;nwr.temp-265']
+'''

@@ -7,9 +7,10 @@ from global_ import print_dict
 # 海染砗磲（QL语句）：查询要素的条件，条件取上名称后就代表符合该条件的要素集。
 class OceanHuedClam:
     def __init__(self, nwr_type: str):
-        self.__include_dict = {}
+        self.__include_dict = {}  # TODO:这个保留，其他逐步调整至convert中
         self.__from_OceanHuedClam_list = []  # or列表，列表元素若是列表，则其为and
         self.__main_type = nwr_type
+        # self.op("TPE", nwr_type)
         self.__kv_dict = {}
         self.__around_dict = {}
         self.__global_bbox_list = []  # 南、西、北、东
@@ -18,25 +19,36 @@ class OceanHuedClam:
         self.__located_in_list = []
         self.__op_list = []
 
-    def op(self, op: str, para1 = None, para2 = None, para3 = None):
+    def op(self, op: str, para1=None, para2=None, para3=None):
         op_element = None
         match op:
+            case "TPE":  # __init__ -> main_type
+                #                   ↓nwr_type
+                op_element = {"TPE": [para1]}  # 这个貌似不用？
             case "K_V":  # key_value -> kv_dict  # or列表，列表元素若是列表，则其为and
-                op_element = {"K_V", para1, para2, para3}
+                #                   ↓key, relation, value
+                op_element = {"K_V": [para1, para2, para3]}
             case "ARD":  # around -> around_dict
-                op_element = {"ARD", para1, para2}
+                #                   ↓set/points, set_point, r
+                op_element = {"ARD": [para1, para2, para3]}
             case "SET":  # set_from -> from_OceanHuedClam_list
-                op_element = {"SET", para1}
+                #                   ↓and/or, set_name
+                op_element = {"SET": [para1, para2]}
             case "BOX":  # global_bbox_list  # 南、西、北、东
-                op_element = {"BOX", para1}
-            case "RCS":  # extend -> recurse_dict
-                op_element = {"RCS", para1, para2}
+                #                   ↓[S, W, N, E]
+                op_element = {"BOX": [para1]}
+            case "RCS":  # extend -> recurse_dict  # 可变位置操作
+                #                   ↓set_name, direction
+                op_element = {"RCS": [para1, para2]}
             case "ID_":  # id -> id_dict
-                op_element = {"ID_", para1, para2}
-            case "LIN":  # located_in -> located_in_list
-                op_element = {"LIN", para1}
+                #                   ↓id, operation
+                op_element = {"ID_": [para1, para2]}
+            case "POL":  # located_in -> located_in_list
+                #                   ↓poly_list
+                op_element = {"POL": [para1]}
             case "ICL":  # include_OceanHuedClam -> include_dict
-                op_element = {"ICL", para1}  # 这个貌似不用？
+                #                   ↓name, set
+                op_element = {"ICL": [para1, para2]}  # 这个貌似不用？
         self.__op_list.append(op_element)
 
     # 海染砗磲（QL语句）之键值关系限制语句：限定查询主体的key与value。
@@ -54,7 +66,8 @@ class OceanHuedClam:
                 print(print_dict[0x2105])
                 return self
             else:
-                self.__kv_dict.update({key: {"value": value, "relation": relation}})
+                self.__kv_dict.update({key: {"value": value, "relation": relation}})  # TODO:后续删除
+                self.op("K_V", key, relation, value)
                 return self
         else:
             print(print_dict[0x2104])
@@ -75,13 +88,15 @@ class OceanHuedClam:
             if (set_point not in self.__include_dict) and (set_point != "_"):
                 print(print_dict[0x2108].format(set=set_point))
             else:
-                self.__around_dict = {set_point: r}
+                self.__around_dict = {set_point: r}  # TODO:后续删除
+                self.op("ARD", "set", set_point, r)
         # 点串线
         else:
             if len(set_point) % 2 != 0:
                 print(print_dict[0x2109])
             else:
-                self.__around_dict = {r: set_point}
+                self.__around_dict = {r: set_point}  # TODO:后续删除
+                self.op("ARD", "points", set_point, r)
         return self
 
     # 海染砗磲（QL语句）之从海染砗磲（QL语句）提取：从满足其他海染砗磲（QL语句）的内容中进一步查询。
@@ -95,7 +110,8 @@ class OceanHuedClam:
     def set_from(self, set_name: (str or list)) -> 'OceanHuedClam':
         if isinstance(set_name, str):
             if (set_name in self.__include_dict) or (set_name == "_"):
-                self.__from_OceanHuedClam_list.append(set_name)
+                self.__from_OceanHuedClam_list.append(set_name)  # TODO:后续删除
+                self.op("SET", "or", set_name)
             else:
                 print(print_dict[0x210C].format(set=set_name))
         else:
@@ -109,23 +125,28 @@ class OceanHuedClam:
                 else:
                     print(print_dict[0x210D])
             if len(and_list) > 0:
-                self.__from_OceanHuedClam_list.append(and_list)
+                self.__from_OceanHuedClam_list.append(and_list)  # TODO:后续删除
+                self.op("SET", "and", set_name)
         return self
 
     def set_bbox(self, E: float, S: float, W: float, N: float) -> 'OceanHuedClam':
-        self.__global_bbox_list = [S, W, N, E]
+        self.__global_bbox_list = [S, W, N, E]  # TODO:后续删除
+        self.op("BOX", [S, W, N, E])
         return self
 
     def extend(self, direction: str, set_name: str = "_") -> 'OceanHuedClam':  # recurse
-        self.__recurse_dict.update({set_name: direction})
+        self.__recurse_dict.update({set_name: direction})  # TODO:后续删除
+        self.op("RCS", set_name, direction)
         return self
 
-    def id(self, directive_id: (int or str or list), id_opreation: str = "=") -> 'OceanHuedClam':
+    def id(self, directive_id: (int or str or list), id_operation: str = "=") -> 'OceanHuedClam':
         if isinstance(directive_id, list):
             for x in range(len(directive_id)):
-                self.__id_dict.update({str(directive_id[x]): id_opreation})
+                self.__id_dict.update({str(directive_id[x]): id_operation})  # TODO:后续删除
+                self.op("ID_", directive_id[x], id_operation)
         else:
-            self.__id_dict.update({str(directive_id): id_opreation})
+            self.__id_dict.update({str(directive_id): id_operation})  # TODO:后续删除
+            self.op("ID_", directive_id, id_operation)
         print(print_dict[0x1114])
         return self
 
@@ -134,13 +155,15 @@ class OceanHuedClam:
         if len(poly_list) % 2 != 0:
             print(print_dict[0x2110])
         else:
-            self.__located_in_list = poly_list
+            self.__located_in_list = poly_list  # TODO:后续删除
+            self.op("POL", poly_list)
         return self
 
     def include_OceanHuedClam(self, set_name: str, the_set: 'OceanHuedClam') -> 'OceanHuedClam':
         if set_name in self.__include_dict:
             print(print_dict[0x1100].format(set=set_name))
-        self.__include_dict.update({set_name: the_set})
+        self.__include_dict.update({set_name: the_set})  # 这个要保留
+        self.op("ICL", set_name, the_set)
         print(print_dict[0x0100].format(set=set_name))
         return self
 
@@ -202,6 +225,43 @@ class OceanHuedClam:
         if step == 2:  # 目前是最后一步
             query_list.append(self)
         return query_list
+
+    def convert_new(self, set_name: str = "", if_main: bool = True, outputed_list=None) -> list:
+        # 如果这个是主语句，最外层的，那么outputed列表应该清空
+        if outputed_list is None:
+            outputed_list = []
+        result = ""
+        # 预先处理引用
+        # TODO:引用部分能不能只输出后面用了的？
+        include_info = ""
+        outputed = outputed_list
+        for include in self.__include_dict:
+            # 先把引用的"...->.set_name;"输出了，后使用set_name时名称就是一致的，然后内容也对的上（递归）
+            # 如果事先已经打印了，就不重复打印，防止A->B;A,B->C中打印两次A
+            if include not in outputed:
+                # TODO:converted_list = ...；暂时先全部放一起，前置条件要不要分开怎么分开再想想
+                for x in self.__include_dict[include].convert(include, False, outputed):
+                    include_info += x
+                # 合并how_many_query()至convert前：result += self.__include_dict[include].convert(include, False, outputed)
+                outputed.append(include)
+                # print("INFO: OceanHuedClam " + include + " is printed.\n信息：所装备的「海染砗磲」“" + include + "”已打印。\n")
+        # 正式数据开始
+        # 要求：除了可变位置操作，其余操作可以乱序，所以先寻找需要终止的操作并分段
+        end_op_list = ["RCS"]
+        op_segment_list = []
+        op_start = 0
+        op_end = 0
+        for x in range(len(self.__op_list)):
+            op = list(self.__op_list[x].keys())[0]
+            print(op, self.__op_list[x][op])
+            if op in end_op_list:
+                op_end = x  # 找到结束位置
+                op_segment_list.append(self.__op_list[op_start: op_end + 1])
+                op_start = x + 1  # 将（下一次）开始位置设置为本次结束位置
+        op_segment_list.append(self.__op_list[op_start:len(self.__op_list)])  # 最后一段
+        for x in op_segment_list:
+            print(x)
+
 
     # 仅在输出时指定的要素集名称（"...->.set_name"）；有引用的情况下，输出本「海染砗磲」时可在声明引用阶段一层一层往回带；
     # 输出QL语句列表
@@ -313,7 +373,7 @@ class OceanHuedClam:
             if each_query.__global_bbox_list:
                 if not if_main:
                     # TODO:这个判断需要吗？
-                    print(print_dict[0x11A1].format(set_name))
+                    print(print_dict[0x11A1].format(set=set_name))
                 else:
                     bbox_info = "(bbox:"
                     for x in range(3):

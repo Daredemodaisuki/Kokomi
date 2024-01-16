@@ -126,6 +126,13 @@ op-group: [['normal', [{'TPE': ['nwr']}, {'ICL': ['Q3', <OceanHuedClam.OceanHued
 # 测试4：extend
 print("=====================")
 Q1 = OceanHuedClam("nwr").key_value("place", "=", "city").extend("<").located_in([1,1,4,5]).key_value("name", "exist")
-Q2 = OceanHuedClam("nwr").include_OceanHuedClam("Q1", Q1).set_from("Q1").set_bbox(11,45,14,19).extend(">>")
-Q3 = OceanHuedClam("nwe").include_OceanHuedClam("Q2", Q2).around("Q2", 100)
+Q2 = OceanHuedClam("nwr").include_OceanHuedClam("Q1", Q1).set_from("Q1").set_bbox(11,45,14,19).extend(">>").key_value("a", "!exist")
+Q3 = OceanHuedClam("nwe").include_OceanHuedClam("Q2", Q2).around("Q2", 100).include_OceanHuedClam("Q1", Q1).set_from("Q1")
 print(Q3.convert_new())
+'''
+【成功】
+----------
+nwr["place"="city"]->.temp7126;.temp7126<->.temp-144;nwr.temp-144(poly:"1 1 4 5")["name"]->.Q1;
+nwr.Q1(bbox:45,14,19,11)->.temp7126;.temp7126>>->.temp7424;nwr.temp7424[!"a"]->.Q2;
+nwe.Q1(around.Q2:100);
+'''

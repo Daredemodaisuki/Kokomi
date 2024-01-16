@@ -334,7 +334,7 @@ class OceanHuedClam:
         op_group_list = []
         op_seg_list_temp = []
         for op_segment in op_segment_list:
-            print(op_segment)
+            # print(op_segment)
             if op_segment[0] == "start" or op_segment[0] == "normal":
                 # 跟上一个temp一不一样，不一样就把之前一样的temp甩给result_list，刷新temp，否则在temp添加op
                 if op_seg_list_temp and (op_seg_list_temp[-1][0] == "start" or op_seg_list_temp[-1][0] == "normal"):
@@ -420,7 +420,7 @@ class OceanHuedClam:
         #   不可变位置操作段+可变位置操作段：type.A(other_conditionL)[k_v](other_conditionR)->.B;.B < ->.C;
         #   独立操作段+可变位置操作段：type(id)->.A;.A < ->.B;
         for op_group in op_group_list:
-            print("op-group:", op_group)
+            # print("op-group:", op_group)
 
             # segment_result_info = self.__main_type
             from_OceanHuedClam_list = []  # or列表，列表元素若是列表，则其为and
@@ -442,6 +442,7 @@ class OceanHuedClam:
 
             for op_segment in op_group:
                 if isinstance(op_segment, str):
+                    # TODO:使得临时中间集合名称随机
                     # 不动op组的第一项：组类型
                     # 如果这组是normal+movable，下组是normal，要传一个临时集合名，否则
                     # Q1 = OceanHuedClam("nwr").key_value("place", "=", "city").extend("<").located_in([1,1,4,5])
@@ -451,15 +452,15 @@ class OceanHuedClam:
                     #                        ↑↑↑↑↑↑↑                       ↑↑↑
                     # 如果这组是normal+movable，且没有下一组，也要传
                     if op_segment == "normal+movable":
-                        print("now", op_segment)
-                        print("114514", len(op_group_list), op_group_list.index(op_group) + 1)
+                        # print("now", op_segment)
+                        # print("114514", len(op_group_list), op_group_list.index(op_group) + 1)
                         if (len(op_group_list) > op_group_list.index(op_group) + 1
                             and (op_group_list[op_group_list.index(op_group) + 1][0] == "normal"
                                  or op_group_list[op_group_list.index(op_group) + 1][0] == "normal+movable"))\
                                 or len(op_group_list) == op_group_list.index(op_group) + 1:
                             temp_set_name1 = "temp" + str(hash(temp_set_name1 + "1"))[0:4]
                             temp_set_name_dict.update({"N+M→N(+M)的N→M": temp_set_name1})
-                            print("->", temp_set_name_dict["N+M→N(+M)的N→M"])
+                            # print("->", temp_set_name_dict["N+M→N(+M)的N→M"])
                             # temp_set_name1 = ""
                             next_nor = True
                         else:
@@ -469,7 +470,7 @@ class OceanHuedClam:
                         if op_group_list.index(op_group) > 0 and \
                                 op_group_list[op_group_list.index(op_group) - 1][0] == "normal+movable":
                             temp_set_name2 = copy.deepcopy(temp_set_name_dict["N+M→N(+M)的N→M"])
-                            print("<-1", temp_set_name2)
+                            # print("<-1", temp_set_name2)
                             # temp_set_name_dict["N+M→N(+M)的N→M"] = ""
                             before_nor = True
                         else:
@@ -477,7 +478,7 @@ class OceanHuedClam:
                 if isinstance(op_segment, list):
                     # 如果这是一个海染最后一组组尾的最后一个段，则必须导出到参数给的名字
                     # if len(op_group_list) == op_group_list.index(op_group) + 1: 错误的，这是最后一组
-                    print("最后", len(op_group), op_group.index(op_segment) + 1)
+                    # print("最后", len(op_group), op_group.index(op_segment) + 1)
                     if len(op_group) == op_group.index(op_segment) + 1\
                             and len(op_group_list) == op_group_list.index(op_group) + 1:
                         group_end = True
@@ -539,7 +540,7 @@ class OceanHuedClam:
 
                             # type
                             group_result_info += self.__main_type
-                            print("<-2", temp_set_name1)
+                            # print("<-2", temp_set_name1)
 
                             # from_other_set（单个集合/交集）
                             if len(from_OceanHuedClam_list) == 1:
@@ -581,11 +582,11 @@ class OceanHuedClam:
                                     located_in_list[len(located_in_list) - 1]) + "\")"
                                 group_result_info += poly_info
 
-                            print("<-3", temp_set_name1)
+                            # print("<-3", temp_set_name1)
                             # k_v
                             if kv_dict:
                                 kv_info = ""
-                                print(kv_dict)
+                                # print(kv_dict)
                                 for key in kv_dict:
                                     value = kv_dict[key].get("value")
                                     match kv_dict[key].get("relation"):
@@ -631,7 +632,7 @@ class OceanHuedClam:
                                 group_result_info += bbox_info
 
                             # ->.set
-                            print("<-4",group_end , temp_set_name1)
+                            # print("<-4",group_end , temp_set_name1)
                             # 一个海染最后一个段必须导去指定的set_name
                             if group_end == True:
                                 temp_set_name1 = set_name
@@ -640,7 +641,7 @@ class OceanHuedClam:
                             elif set_name != "" and temp_set_name1 == "":
                                 group_result_info += "->." + set_name
                             group_result_info += ";"
-                            print("op-group>>>", op_group, "\n>>>", group_result_info)
+                            # print("op-group>>>", op_group, "\n>>>", group_result_info)
 
                             '''# 看下一op段是什么，如果是可变那么传递参数
                             if op_group[op_group.index(op_segment) + 1] and op_group[op_group.index(op_segment) + 1][0] == "movable":
@@ -680,7 +681,7 @@ class OceanHuedClam:
                                     if next_nor == True:  # 给下一组第一段的名字
                                         temp_set_name2 = "temp" + str(hash(group_result_info))[0:4]
                                         temp_set_name_dict.update({"N+M→N(+M)的M→N": temp_set_name2})
-                                        print("aaaaaaaaaaaaaaaaaa", set_name, temp_set_name2)
+                                        # print("aaaaaaaaaaaaaaaaaa", set_name, temp_set_name2)
                                     # 但是一个海染最后一个段必须导去指定的set_name
                                     if group_end == True:
                                         temp_set_name2 = ""

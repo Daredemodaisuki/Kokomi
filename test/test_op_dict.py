@@ -125,6 +125,7 @@ op-group: [['normal', [{'TPE': ['nwr']}, {'ICL': ['Q3', <OceanHuedClam.OceanHued
 
 # 测试4：extend
 print("=====================")
-Q1 = OceanHuedClam("nwr").key_value("place", "=", "city").extend("<").located_in([1,1,4,5])
+Q1 = OceanHuedClam("nwr").key_value("place", "=", "city").extend("<").located_in([1,1,4,5]).key_value("name", "exist")
 Q2 = OceanHuedClam("nwr").include_OceanHuedClam("Q1", Q1).set_from("Q1").set_bbox(11,45,14,19).extend(">>")
-print(Q2.convert_new())
+Q3 = OceanHuedClam("nwe").include_OceanHuedClam("Q2", Q2).around("Q2", 100)
+print(Q3.convert_new())

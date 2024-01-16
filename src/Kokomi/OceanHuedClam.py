@@ -433,24 +433,59 @@ class OceanHuedClam:
             located_in_list = []
             group_result_info = ""
 
+            temp_set_name1 = ""
+            temp_set_name2 = ""
+
+            next_nor = False  # 如果这组是normal+movable，下组是normal，要传一个临时集合名（temp_set_name1）
+            before_nor = False  # 如果这组是normal，上组是normal+movable，要接这个临时集合名（temp_set_name2）
+            group_end = False  # 一个海染最后一组组尾的最后一个段，则必须导出到参数给的名字（优先级最高）
+
             for op_segment in op_group:
-                # 不动op组的第一项：组类型，看下一组是什么
-                # 如果这组是normal+movable，下组是normal，要传一个临时集合名，否则
-                # Q1 = OceanHuedClam("nwr").key_value("place", "=", "city").extend("<").located_in([1,1,4,5])
-                # Q2 = OceanHuedClam("nwr").include_OceanHuedClam("Q1", Q1).set_from("Q1").set_bbox(11,45,14,19).extend(">>")
-                # 会得到
-                # ['nwr["place"="city"]->.Q1;.Q1<;.Q1<;nwr(poly:"1 1 4 5")->.Q1;.Q1>>;nwr.Q1(bbox:45,14,19,11);>>;>>;']
-                #                        ↑↑↑↑↑↑↑↑↑↑↑↑↑                      ↑↑↑
                 if isinstance(op_segment, str):
+                    # 不动op组的第一项：组类型
+                    # 如果这组是normal+movable，下组是normal，要传一个临时集合名，否则
+                    # Q1 = OceanHuedClam("nwr").key_value("place", "=", "city").extend("<").located_in([1,1,4,5])
+                    # Q2 = OceanHuedClam("nwr").include_OceanHuedClam("Q1", Q1).set_from("Q1").set_bbox(11,45,14,19).extend(">>")
+                    # 会得到
+                    # ['nwr["place"="city"]->.Q1;.Q1<;nwr(poly:"1 1 4 5")->.Q1;nwr.Q1(bbox:45,14,19,11);>>;']
+                    #                        ↑↑↑↑↑↑↑                       ↑↑↑
+                    # 如果这组是normal+movable，且没有下一组，也要传
                     if op_segment == "normal+movable":
-                        if op_group[op_group.index(op_segment) + 1][0] == "normal":
-                            print()
+                        print("now", op_segment)
+                        print("114514", len(op_group_list), op_group_list.index(op_group) + 1)
+                        if (len(op_group_list) > op_group_list.index(op_group) + 1
+                            and (op_group_list[op_group_list.index(op_group) + 1][0] == "normal"
+                                 or op_group_list[op_group_list.index(op_group) + 1][0] == "normal+movable"))\
+                                or len(op_group_list) == op_group_list.index(op_group) + 1:
+                            temp_set_name1 = "temp" + str(hash(temp_set_name1 + "1"))[0:4]
+                            temp_set_name_dict.update({"N+M→N(+M)的N→M": temp_set_name1})
+                            print("->", temp_set_name_dict["N+M→N(+M)的N→M"])
+                            # temp_set_name1 = ""
+                            next_nor = True
+                        else:
+                            next_nor = False
+                    # 如果这组是normal，上组是normal+movable，要接这个临时集合名
+                    if op_segment == "normal" or op_segment == "normal+movable":
+                        if op_group_list.index(op_group) > 0 and \
+                                op_group_list[op_group_list.index(op_group) - 1][0] == "normal+movable":
+                            temp_set_name2 = copy.deepcopy(temp_set_name_dict["N+M→N(+M)的N→M"])
+                            print("<-1", temp_set_name2)
+                            # temp_set_name_dict["N+M→N(+M)的N→M"] = ""
+                            before_nor = True
+                        else:
+                            before_nor = False
                 if isinstance(op_segment, list):
+                    # 如果这是一个海染最后一组组尾的最后一个段，则必须导出到参数给的名字
+                    # if len(op_group_list) == op_group_list.index(op_group) + 1: 错误的，这是最后一组
+                    print("最后", len(op_group), op_group.index(op_segment) + 1)
+                    if len(op_group) == op_group.index(op_segment) + 1\
+                            and len(op_group_list) == op_group_list.index(op_group) + 1:
+                        group_end = True
                     # 将不可变位置操作段中的信息保存以备输出
                     match op_segment[0]:
                         case "normal":
                             for op in op_segment[1]:
-                                print("op", op)
+                                # print("op", op)
                                 op_id = list(op.keys())[0]
                                 # op = {op_id: [para1, para2, para3]}
                                 # op[op_id] = [para1, para2, para3]
@@ -483,6 +518,9 @@ class OceanHuedClam:
                                         print(print_dict[0x31C0].format(op_id=op_id))
 
                             # 整体输出不可变位置操作
+                            # 如果这组是normal，上组是normal+movable，要接临时集合名
+                            if before_nor == True:
+                                from_OceanHuedClam_list.append(temp_set_name_dict["N+M→N(+M)的M→N"])
 
                             # from_other_set（并集）
                             if len(from_OceanHuedClam_list) > 1:
@@ -501,6 +539,7 @@ class OceanHuedClam:
 
                             # type
                             group_result_info += self.__main_type
+                            print("<-2", temp_set_name1)
 
                             # from_other_set（单个集合/交集）
                             if len(from_OceanHuedClam_list) == 1:
@@ -542,6 +581,7 @@ class OceanHuedClam:
                                     located_in_list[len(located_in_list) - 1]) + "\")"
                                 group_result_info += poly_info
 
+                            print("<-3", temp_set_name1)
                             # k_v
                             if kv_dict:
                                 kv_info = ""
@@ -575,21 +615,32 @@ class OceanHuedClam:
 
                             # bbox
                             if global_bbox_list:
-                                if not if_main:
-                                    # TODO:这个判断需要吗？
+                                '''if not if_main:
+                                    # TODO:这个判断需要吗？ -> 没必要
                                     print(print_dict[0x11A1].format(set=set_name))
                                 else:
                                     bbox_info = "(bbox:"
                                     for x in range(3):
                                         bbox_info += str(global_bbox_list[x]) + ","
                                     bbox_info += str(global_bbox_list[3]) + ")"
-                                    group_result_info += bbox_info
+                                    group_result_info += bbox_info'''
+                                bbox_info = "(bbox:"
+                                for x in range(3):
+                                    bbox_info += str(global_bbox_list[x]) + ","
+                                bbox_info += str(global_bbox_list[3]) + ")"
+                                group_result_info += bbox_info
 
                             # ->.set
-                            if set_name != "":
+                            print("<-4",group_end , temp_set_name1)
+                            # 一个海染最后一个段必须导去指定的set_name
+                            if group_end == True:
+                                temp_set_name1 = set_name
+                            if set_name != "" and temp_set_name1 != "":
+                                group_result_info += "->." + temp_set_name1
+                            elif set_name != "" and temp_set_name1 == "":
                                 group_result_info += "->." + set_name
                             group_result_info += ";"
-                            print("op-group:", op_group, "\n>>>", group_result_info)
+                            print("op-group>>>", op_group, "\n>>>", group_result_info)
 
                             '''# 看下一op段是什么，如果是可变那么传递参数
                             if op_group[op_group.index(op_segment) + 1] and op_group[op_group.index(op_segment) + 1][0] == "movable":
@@ -612,14 +663,44 @@ class OceanHuedClam:
                                 # extend(recurse)
                                 recurse_info = ""
                                 if recurse_dict:
+                                    # print(temp_set_name1) -> 传过来了的，有
+                                    if next_nor == True:  # 沿用本组第一段的名字
+                                        set_name_rec = temp_set_name1
+                                    else:
+                                        set_name_rec = set_name
                                     for recurse_set in recurse_dict:
-                                        if recurse_set == "_" and set_name == "":
+                                        if recurse_set == "_" and set_name_rec == "":
                                             recurse_info = recurse_dict[recurse_set] + ";"
                                         elif recurse_set != "_":
-                                            recurse_info += "." + recurse_set + recurse_dict[recurse_set] + ";"
+                                            recurse_info += "." + recurse_set + recurse_dict[recurse_set]
                                         else:
-                                            recurse_info += "." + set_name + recurse_dict[recurse_set] + ";"
+                                            recurse_info += "." + set_name_rec + recurse_dict[recurse_set]
+                                    a = 0
+                                    # ->.set
+                                    if next_nor == True:  # 给下一组第一段的名字
+                                        temp_set_name2 = "temp" + str(hash(group_result_info))[0:4]
+                                        temp_set_name_dict.update({"N+M→N(+M)的M→N": temp_set_name2})
+                                        print("aaaaaaaaaaaaaaaaaa", set_name, temp_set_name2)
+                                    # 但是一个海染最后一个段必须导去指定的set_name
+                                    if group_end == True:
+                                        temp_set_name2 = ""
+                                    if set_name != "" and temp_set_name2 != "":
+                                        recurse_info += "->." + temp_set_name2
+                                    elif set_name != "" and temp_set_name2 == "":
+                                        recurse_info += "->." + set_name
+                                    recurse_info += ";"
                                 group_result_info += recurse_info
+                                '''# ->.set
+                                if next_nor == True:  # 给下一组第一段的名字
+                                    temp_set_name2 = "temp" + str(hash(group_result_info))[0:4]
+                                    temp_set_name_dict.update({"N+M→N(+M)的M→N": temp_set_name2})
+                                if set_name != "" and temp_set_name2 != "":
+                                    group_result_info += "->." + temp_set_name2
+                                elif set_name != "" and temp_set_name2 == "":
+                                    group_result_info += "->." + set_name
+                                group_result_info += ";"'''
+
+
 
 
             result_info += group_result_info

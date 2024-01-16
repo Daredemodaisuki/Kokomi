@@ -257,6 +257,7 @@ class OceanHuedClam:
         if outputed_list is None:
             outputed_list = []
         result_info = ""
+
         # 预先处理引用
         # TODO:引用部分能不能只输出后面用了的？
         include_info = ""
@@ -271,6 +272,7 @@ class OceanHuedClam:
                 # 合并how_many_query()至convert前：result += self.__include_dict[include].convert(include, False, outputed)
                 outputed.append(include)
                 # print("INFO: OceanHuedClam " + include + " is printed.\n信息：所装备的「海染砗磲」“" + include + "”已打印。\n")
+        result_info += include_info
 
         # 正式数据开始
         # 分段：除了可变位置、独立操作，其余操作可以乱序，所以先寻找需要不同的操作并分段，每段只有一种操作
@@ -282,10 +284,10 @@ class OceanHuedClam:
         same_type_op_list = []
         for x in range(len(self.__op_list)):
             # 提取op标识符
-            op = list(self.__op_list[x].keys())[0]
-            print(op, self.__op_list[x][op])
+            op_id = list(self.__op_list[x].keys())[0]
+            # print(op, self.__op_list[x][op_id])
             # 判断op类型
-            this_op_type = self.__op_type(op)
+            this_op_type = self.__op_type(op_id)
             if this_op_type != now_op_type:
                 op_end = x  # 找到相同类型op的最后一个，将op类型和同类op添加到段
                 op_segment_list.append([now_op_type, self.__op_list[op_start: op_end]])
@@ -363,12 +365,10 @@ class OceanHuedClam:
                 for x in range(len(new_op_group[0]) - 2):
                     new_op_group[0][x + 1] = new_op_group[0][x + 2]
             op_group_list[0] = new_op_group[0][0:len(new_op_group[0]) - 1]
-        print(" ")
-        for x in op_group_list:
-            print(x)
 
+        # 对每个op组的每个op段按别不可变位置、可变位置、独立操作开刀
         '''
-            match op:
+        match op:
             # 不可变位置操作 normal / 可变位置操作 movable / 独立操作 unique
             case "TPE":  # __init__ -> main_type  # 不可变位置操作
                 #                   ↓nwr_type
@@ -400,9 +400,96 @@ class OceanHuedClam:
             case "ICL":  # include_OceanHuedClam -> include_dict  # 不可变位置操作
                 #                   ↓name, set
                 op_element = {"ICL": [para1, para2]}  # 这个貌似不用？
-            '''
-        '''if list(op_segment[0].keys())[0] not in movable_op_list:
-                result_info = self.__main_type'''
+        '''
+        #   纯不可变位置操作段：type.A(other_conditionL)[k_v](other_conditionR)->.B;
+        #   纯独立操作段：type(id)->.B;
+        #   不可变位置操作段+可变位置操作段：type.A(other_conditionL)[k_v](other_conditionR)->.B;.B < ->.C;
+        #   独立操作段+可变位置操作段：type(id)->.A;.A < ->.B;
+        for op_group in op_group_list:
+            print(op_group)
+
+            # type
+            group_result_info = self.__main_type
+
+            # segment_result_info = self.__main_type
+            from_OceanHuedClam_list = []  # or列表，列表元素若是列表，则其为and
+            # main_type = nwr_type
+            kv_dict = {}
+            around_dict = {}
+            global_bbox_list = []  # 南、西、北、东
+            id_dict = {}
+            recurse_dict = {}
+            located_in_list = []
+            for op_segment in op_group:
+                # 将不可变位置操作段中的信息保存以备输出
+                match op_segment[0]:
+                    case "normal":
+                        for op in op_segment[1]:
+                            op_id = list(op.keys())[0]
+                            # op = {op_id: [para1, para2, para3]}
+                            # op[op_id] = [para1, para2, para3]
+                            # op[op_id][0] = para1
+                            match op_id:
+                                case "TPE":
+                                    continue
+                                case "K_V":
+                                    # {key: {"value": value, "relation": relation}}
+                                    kv_dict.update({op[op_id][0]: {"value": op[op_id][2], "relation": op[op_id][1]}})
+                                case "ARD":
+                                    # 数据集{set_point: r} 点串线{r: set_point}
+                                    if op[op_id][0] == "set":
+                                        around_dict.update({op[op_id][1]: op[op_id][2]})
+                                    else:
+                                        around_dict.update({op[op_id][2]: op[op_id][1]})
+                                case "SET":
+                                    from_OceanHuedClam_list.append(op[op_id][1])
+                                case "BOX":
+                                    if global_bbox_list:
+                                        print(print_dict[0x11C0])
+                                    global_bbox_list = op[op_id][0]
+                                # case "IDn":  # TODO:flag位
+                                case "POL":
+                                    located_in_list = op[op_id][0]
+                                case "ICL":
+                                    continue
+                                case _:
+                                    print(print_dict[0x31C0].format(op_id=op_id))
+
+                        # 输出不可变位置操作
+                        # k_v
+                        kv_info = ""
+                        print(kv_dict)
+                        for key in kv_dict:
+                            value = kv_dict[key].get("value")
+                            match kv_dict[key].get("relation"):
+                                case "exist":  # 存在key（value可不填）
+                                    now_info = "[\"" + key + "\"]"
+                                case "!exist":  # 不存在key
+                                    now_info = "[!\"" + key + "\"]"
+                                case "=":  # 存在key且对应value匹配
+                                    now_info = "[\"" + key + "\"" + "=\"" + value + "\"]"
+                                case "!=":  # 存在key但对应value不匹配 或 不存在key
+                                    now_info = "[\"" + key + "\"" + "!=\"" + value + "\"]"
+                                case "=!=":  # 必须存在key但对应value不匹配
+                                    now_info = "[\"" + key + "\"][\"" + key + "\"!=\"" + value + "\"]"
+                                case "v-reg":  # v可含正则表达式
+                                    now_info = "[\"" + key + "\"~\"" + value + "\"]"
+                                case "!v-reg":  # v可含正则表达式但不匹配
+                                    now_info = "[\"" + key + "\"!~\"" + value + "\"]"
+                                case "kv-reg":  # kv皆可含正则表达式
+                                    now_info = "[~\"" + key + "\"~\"" + value + "\"]"
+                                case "v-Aa_no_care":  # v可含正则表达式且不分大小写
+                                    now_info = "[~\"" + key + "\"~\"" + value + "\",i]"
+                                case _:
+                                    now_info = ""
+                                    print(print_dict[0x31C1].format(relation=kv_dict[key].get("relation")))
+                            kv_info += now_info
+                        group_result_info += kv_info
+                        print("op-group:", op_group, "\n>>>", group_result_info)
+
+                    case "":
+                        group_result_info = ""
+            result_info += group_result_info
 
     # 仅在输出时指定的要素集名称（"...->.set_name"）；有引用的情况下，输出本「海染砗磲」时可在声明引用阶段一层一层往回带；
     # 输出QL语句列表

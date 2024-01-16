@@ -41,6 +41,8 @@ print_dict = {
             "信息：所装备的「海染砗磲」“{set}”使用了多个其他「海染砗磲」的交集。\n",
     0x11A1: "WARN: Bbox in set {set} is disabled due to it is not the main set in this query.\n"
             "警示意义的：因为「海染砗磲」“{set}”不是最外层语句，其界定框限制不生效。\n",
+    0x11C0: "WARN: Multiple bboxes have been set in one OceanHuedClam op-group.\n"  # new convert
+            "警示意义的：在同一「海染砗磲」方法组中出现了多个界定框方法，仅生效最后一个。\n",
 
     0x2104: "ERROR: Undefined key-value relation.\n"  # k_v
             "错误的：未定义的键值关系。\n",
@@ -56,4 +58,12 @@ print_dict = {
             "错误的：传入名称列表包含非字符串元素。\n",
     0x2110: "ERROR: Lat/lon-s not in pairs.\n"  # located_in
             "错误的：传入的多边形坐标[纬度1, 经度1, 纬度2, 经度2, ...]不成对。\n",
+    # 内部错误
+    0x31C0: "【 ↓ 内部错误】\n"
+            "ERROR: Unacceptable OceanHuedClam op-id \"{op_id}\".\n"  # new convert
+            "错误的：处理方法段时传入了不可接受方法标识符「{op_id}」。\n",
+    0x31C1: "【 ↓ 内部错误】\n"
+            "ERROR: Unacceptable key_value relation \"{relation}\".\n"
+            "错误的：处理方法段-k_v关系时传入了不可接受的关系参数「{relation}」。\n",
+
 }

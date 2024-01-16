@@ -18,37 +18,38 @@ INFO: OceanHuedClam  Q1  is included.
 WARN: When there is id limitation in an OceanHuedClam, other limitations cannot function.
 警示意义的：使用id限定后，其他「海染砗磲」条件无法生效。
 
-TPE ['nwr']
-BOX [[2, 3, 4, 1]]
 ['start', [{'TPE': ['nwr']}]]
 ['normal', [{'BOX': [[2, 3, 4, 1]]}]]
- 
-[['start', [{'TPE': ['nwr']}]], ['normal', [{'BOX': [[2, 3, 4, 1]]}]]]
+[['normal', [{'TPE': ['nwr']}, {'BOX': [[2, 3, 4, 1]]}]]]
 WARN: Bbox in set Q1 is disabled due to it is not the main set in this query.
 警示意义的：因为「海染砗磲」“Q1”不是最外层语句，其界定框限制不生效。
 
-TPE ['nwr']
-ICL ['Q1', <OceanHuedClam.OceanHuedClam object at 0x0000014AC6750490>]
-K_V ['railway', 'exist', '']
-RCS ['_', '<']
-K_V ['name:zh', 'exist', '']
-RCS ['_', '<']
-K_V ['name:en', 'exist', '']
-IDe [114514]
-K_V ['name', 'exist', '']
-K_V ['name', '!exist', '']
 ['start', [{'TPE': ['nwr']}]]
-['normal', [{'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x0000014AC6750490>]}, {'K_V': ['railway', 'exist', '']}]]
-['movable', [{'RCS': ['_', '<']}]]
-['normal', [{'K_V': ['name:zh', 'exist', '']}]]
-['movable', [{'RCS': ['_', '<']}]]
+['normal', [{'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x000002B2E2F006D0>]}, {'K_V': ['railway', 'exist', '']}, {'K_V': ['name:zh', 'exist', '']}]]
+['movable', [{'RCS': ['_', '>']}]]
 ['normal', [{'K_V': ['name:en', 'exist', '']}]]
-['end', [{'IDe': [114514]}]]
+['unique', [{'IDe': [114514]}]]
+['movable', [{'RCS': ['_', '>>']}]]
 ['normal', [{'K_V': ['name', 'exist', '']}, {'K_V': ['name', '!exist', '']}]]
- 
-[['start', [{'TPE': ['nwr']}]], ['normal', [{'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x0000014AC6750490>]}, {'K_V': ['railway', 'exist', '']}]], ['movable', [{'RCS': ['_', '<']}]]]
-[['normal', [{'K_V': ['name:zh', 'exist', '']}]], ['movable', [{'RCS': ['_', '<']}]]]
+['movable', [{'RCS': ['_', '<']}]]
+[['normal', [{'TPE': ['nwr']}, {'ICL': ['Q1', <OceanHuedClam.OceanHuedClam object at 0x000002B2E5519050>]}, {'K_V': ['railway', 'exist', '']}, {'K_V': ['name:zh', 'exist', '']}]], ['movable', [{'RCS': ['_', '>']}]]]
 [['normal', [{'K_V': ['name:en', 'exist', '']}]]]
-[['end', [{'IDe': [114514]}]]]
-[['normal', [{'K_V': ['name', 'exist', '']}, {'K_V': ['name', '!exist', '']}]]]
+[['unique', [{'IDe': [114514]}]], ['movable', [{'RCS': ['_', '>>']}]]]
+[['normal', [{'K_V': ['name', 'exist', '']}, {'K_V': ['name', '!exist', '']}]], ['movable', [{'RCS': ['_', '<']}]]]
+'''
+
+# 测试2：输出kv
+print("=====================")
+Q1 = OceanHuedClam("nwr").key_value("name:zh", "=", "北京市").key_value("highway", "!exist").key_value("name:en", "exist")\
+    .convert_new()
+
+'''
+【成功】
+----------
+['start', [{'TPE': ['nwr']}]]
+['normal', [{'K_V': ['name:zh', '=', '北京市']}, {'K_V': ['highway', '!exist', '']}, {'K_V': ['name:en', 'exist', '']}]]
+[['normal', [{'TPE': ['nwr']}, {'K_V': ['name:zh', '=', '北京市']}, {'K_V': ['highway', '!exist', '']}, {'K_V': ['name:en', 'exist', '']}]]]
+{'name:zh': {'value': '北京市', 'relation': '='}, 'highway': {'value': '', 'relation': '!exist'}, 'name:en': {'value': '', 'relation': 'exist'}}
+op-group: [['normal', [{'TPE': ['nwr']}, {'K_V': ['name:zh', '=', '北京市']}, {'K_V': ['highway', '!exist', '']}, {'K_V': ['name:en', 'exist', '']}]]] 
+>>> nwr["name:zh"="北京市"][!"highway"]["name:en"]
 '''

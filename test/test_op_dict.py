@@ -122,3 +122,9 @@ op-group: [['normal', [{'TPE': ['nwr']}, {'ICL': ['Q3', <OceanHuedClam.OceanHued
 >>> nwr(around.Q3:100);
 ※ Q4 >>> ['nwr(poly:"1 1 4 5 1 4")["name:zh"~"北京市"]["name:en"]->.Q1;nwr.Q1[!"highway"]->.Q2;(nwr.Q1;nwr.Q2;)->.temp2950;nwr.temp2950->.Q3;nwr(around.Q3:100);']
 '''
+
+# 测试4：extend
+print("=====================")
+Q1 = OceanHuedClam("nwr").key_value("place", "=", "city").extend("<").located_in([1,1,4,5])
+Q2 = OceanHuedClam("nwr").include_OceanHuedClam("Q1", Q1).set_from("Q1").set_bbox(11,45,14,19).extend(">>")
+print(Q2.convert_new())

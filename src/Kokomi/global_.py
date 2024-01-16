@@ -58,11 +58,14 @@ print_dict = {
             "错误的：传入名称列表包含非字符串元素。\n",
     0x2110: "ERROR: Lat/lon-s not in pairs.\n"  # located_in
             "错误的：传入的多边形坐标[纬度1, 经度1, 纬度2, 经度2, ...]不成对。\n",
+    0x21C0: "【 ↓ 翻译时出错】"
+            "ERROR: Movable OceanHuedClam method cannot be used alone.\n"
+            "错误的：可变位置「海染砗磲」方法必须与不可变位置或独立方法联用且使用在其后。\n",
     # 内部错误
-    0x31C0: "【 ↓ 内部错误】\n"
+    0x31C0: "【 ↓ 翻译时出错-内部错误】\n"
             "ERROR: Unacceptable OceanHuedClam op-id \"{op_id}\".\n"  # new convert
             "错误的：处理方法段时传入了不可接受方法标识符「{op_id}」。\n",
-    0x31C1: "【 ↓ 内部错误】\n"
+    0x31C1: "【 ↓ 翻译时出错-内部错误】\n"
             "ERROR: Unacceptable key_value relation \"{relation}\".\n"
             "错误的：处理方法段-k_v关系时传入了不可接受的关系参数「{relation}」。\n",
 

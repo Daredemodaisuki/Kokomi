@@ -2,10 +2,10 @@ from main import OceanHuedClam
 
 # 测试1：是否能正确存储、分割标识符序列（不代表有意义的数据）
 Q1 = OceanHuedClam("nwr").set_bbox(1, 2, 3, 4)
-Q2 = OceanHuedClam("nwr").include_OceanHuedClam("Q1", Q1).key_value("railway", "exist").extend("<")\
-    .key_value("name:zh", "exist").extend("<")\
-    .key_value("name:en", "exist").id(114514)\
-    .key_value("name", "exist").key_value("name", "!exist")
+Q2 = OceanHuedClam("nwr").include_OceanHuedClam("Q1", Q1).key_value("railway", "exist")\
+    .key_value("name:zh", "exist").extend(">")\
+    .key_value("name:en", "exist").id(114514).extend(">>")\
+    .key_value("name", "exist").key_value("name", "!exist").extend("<")
 Q1.convert_new()
 Q2.convert_new()
 

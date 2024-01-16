@@ -256,7 +256,7 @@ class OceanHuedClam:
         # 如果这个是主语句，最外层的，那么outputed列表应该清空
         if outputed_list is None:
             outputed_list = []
-        result = ""
+        result_info = ""
         # 预先处理引用
         # TODO:引用部分能不能只输出后面用了的？
         include_info = ""
@@ -273,7 +273,7 @@ class OceanHuedClam:
                 # print("INFO: OceanHuedClam " + include + " is printed.\n信息：所装备的「海染砗磲」“" + include + "”已打印。\n")
 
         # 正式数据开始
-        # 要求：除了可变位置操作，其余操作可以乱序，所以先寻找需要终止的操作并分段 -> [不可变, 不可变, ..., 不可变（最后一个）/可变]
+        # 分段：除了可变位置、独立操作，其余操作可以乱序，所以先寻找需要不同的操作并分段，每段只有一种操作
         op_segment_list = []
         op_start = 0
         op_end = 0
@@ -294,11 +294,11 @@ class OceanHuedClam:
         # 最后一段（前面for循环寻到最后一段因为没有变化不会直接添加，for完成之后this_op_type即是最后一个的、最后一段的type）
         op_segment_list.append([this_op_type, self.__op_list[op_start:len(self.__op_list)]])
 
-        # 判断是下列哪种情况，并重组：
-        #   纯不可变位置操作：type.A(other_conditionL)[k_v](other_conditionR)->.B;
-        #   纯独立操作：type(id)->.B;
-        #   不可变位置操作+可变位置操作：type.A(other_conditionL)[k_v](other_conditionR)->.B;.B < ->.C;
-        #   独立操作+可变位置操作：type(id)->.A;.A < ->.B;
+        # 分组：判断是下列哪种情况，并将符合条件的段组在一起：
+        #   纯不可变位置操作段：type.A(other_conditionL)[k_v](other_conditionR)->.B;
+        #   纯独立操作段：type(id)->.B;
+        #   不可变位置操作段+可变位置操作段：type.A(other_conditionL)[k_v](other_conditionR)->.B;.B < ->.C;
+        #   独立操作段+可变位置操作段：type(id)->.A;.A < ->.B;
         # 上述句法只有最后一个集合名称是convert的set_name参数
         '''==下面一部分基于 New Bing 写的（偷懒）==
 
@@ -328,33 +328,43 @@ class OceanHuedClam:
         
         整挺好，但可能会出现A、B类数字混合在一起的情况，故还需要添加判断是否同temp前一项相同
         '''
-        result_list = []
-        result_temp = []
+        op_group_list = []
+        op_group_temp = []
         for op_segment in op_segment_list:
             print(op_segment)
             if op_segment[0] == "start" or op_segment[0] == "normal":
                 # 跟temp上一个一不一样，不一样就把之前一样的temp甩给result_list，刷新temp，否则在temp添加op
-                if result_temp and (result_temp[-1][0] == "start" or result_temp[-1][0] == "normal"):
-                    result_temp.append(op_segment)
+                if op_group_temp and (op_group_temp[-1][0] == "start" or op_group_temp[-1][0] == "normal"):
+                    op_group_temp.append(op_segment)
                 else:
-                    if result_temp:
-                        result_list.append(result_temp)
-                    result_temp = [op_segment]
+                    if op_group_temp:
+                        op_group_list.append(op_group_temp)
+                    op_group_temp = [op_segment]
             elif op_segment[0] == "unique":
-                if result_temp and result_temp[-1][0] == "unique":
-                    result_temp.append(op_segment)
+                if op_group_temp and op_group_temp[-1][0] == "unique":
+                    op_group_temp.append(op_segment)
                 else:
-                    if result_temp:
-                        result_list.append(result_temp)
-                    result_temp = [op_segment]
+                    if op_group_temp:
+                        op_group_list.append(op_group_temp)
+                    op_group_temp = [op_segment]
             else:
-                result_temp.append(op_segment)
-                result_list.append(result_temp)
-                result_temp = []
-        if result_temp:
-            result_list.append(result_temp)
+                op_group_temp.append(op_segment)
+                op_group_list.append(op_group_temp)
+                op_group_temp = []
+        if op_group_temp:
+            op_group_list.append(op_group_temp)
+        # 按照4类重组后，start必是第一组第一段op_segment，如果其后是normal段，则合并，
+        if len(op_group_list[0]) > 1 and op_group_list[0][1][0] == "normal":
+            new_op_group = copy.deepcopy(op_group_list)
+            op_group_temp = new_op_group[0][0][1]  # [{'TPE': ['nwr']}]
+            op_group_temp.extend(new_op_group[0][1][1])
+            new_op_group[0][0] = ["normal", op_group_temp]
+            if len(new_op_group[0]) > 2:
+                for x in range(len(new_op_group[0]) - 2):
+                    new_op_group[0][x + 1] = new_op_group[0][x + 2]
+            op_group_list[0] = new_op_group[0][0:len(new_op_group[0]) - 1]
         print(" ")
-        for x in result_list:
+        for x in op_group_list:
             print(x)
 
         '''

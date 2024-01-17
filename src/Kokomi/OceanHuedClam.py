@@ -321,7 +321,7 @@ class OceanHuedClam:
             op_group_list.append(op_group)
         return op_group_list
 
-    def convert_new(self, set_name: str = "", if_main: bool = True, outputed_list=None) -> list:
+    def convert(self, set_name: str = "", if_main: bool = True, outputed_list=None) -> list:
         # 如果这个是主语句，最外层的，那么outputed列表应该清空
         if outputed_list is None:
             outputed_list = []
@@ -336,7 +336,7 @@ class OceanHuedClam:
             # 如果事先已经打印了，就不重复打印，防止A->B;A,B->C中打印两次A
             if include not in outputed:
                 # TODO:converted_list = ...；暂时先全部放一起，前置条件要不要分开怎么分开再想想
-                for x in self.__include_dict[include].convert_new(include, False, outputed):
+                for x in self.__include_dict[include].convert(include, False, outputed):
                     include_info += x
                 # 合并how_many_query()至convert前：result += self.__include_dict[include].convert(include, False, outputed)
                 outputed.append(include)
@@ -355,15 +355,15 @@ class OceanHuedClam:
             # 二段组 + 单段组：二段组第2段to变inter，单段组（只有1段）from变inter
             if op_group_list[x]["type"] in ["NG", "UG"]:
                 randint = random.randint(0, 9999)  # 随机名称
-                op_group_list[x]["seg_list"][1]["to"] = "Temp_inter" + f"{randint:04d}"
-                op_group_list[x + 1]["seg_list"][0]["from"] = "Temp_inter" + f"{randint:04d}"
+                op_group_list[x]["seg_list"][1]["to"] = "TempInter" + f"{randint:04d}"
+                op_group_list[x + 1]["seg_list"][0]["from"] = "TempInter" + f"{randint:04d}"
                 # print("二段组 + 单/二段组", op_group_list[x]["seg_list"][1])
             # 单段组 + 二段组：单段组to变inter，二段组第1段from变inter
             # 单段组 + 单段组：第一组第to变inter，第二组（只有1段）from变inter
             elif op_group_list[x]["type"] in ["NN", "UU"]:
                 randint = random.randint(0, 9999)  # 随机名称
-                op_group_list[x]["seg_list"][0]["to"] = "Temp_inter" + f"{randint:04d}"
-                op_group_list[x + 1]["seg_list"][0]["from"] = "Temp_inter" + f"{randint:04d}"
+                op_group_list[x]["seg_list"][0]["to"] = "TempInter" + f"{randint:04d}"
+                op_group_list[x + 1]["seg_list"][0]["from"] = "TempInter" + f"{randint:04d}"
                 # print("单段组 + 单/二段组", op_group_list[x]["seg_list"][0])
         # 最后一组最后一段的to必须是由convert函数的参数指定的name
         # TODO:其他段呢？
@@ -375,8 +375,8 @@ class OceanHuedClam:
             # NG、UG组（二段组）「组内」无论何种情况都需要inner过渡：1段to变inner，2段from变inner
             if op_group["type"] in ["NG", "UG"]:
                 randint = random.randint(0, 9999)  # 随机名称
-                op_group["seg_list"][0]["to"] = "Temp_inner" + f"{randint}"
-                op_group["seg_list"][1]["from"] = "Temp_inner" + f"{randint}"
+                op_group["seg_list"][0]["to"] = "TempInner" + f"{randint}"
+                op_group["seg_list"][1]["from"] = "TempInner" + f"{randint}"
                 # print(op_group["type"], "inner_to", op_group["seg_list"][0]["to"])
             # 处理组内各段内容
             for op_segment in op_group["seg_list"]:
@@ -388,7 +388,7 @@ class OceanHuedClam:
                 located_in_list = []
                 segment_result_info = ""
                 id_list = []
-                temp_name_union = "Temp_union" + f"{random.randint(0, 9999):04d}"
+                temp_name_union = "TempUnion" + f"{random.randint(0, 9999):04d}"
                 # print(op_segment)
 
                 # 警告部分没有问题
@@ -558,7 +558,7 @@ class OceanHuedClam:
                                     recurse_info += "." + op_segment["from"]
                                 elif recurse_set != "_":
                                     recurse_info += "." + recurse_set["set_name"]
-                                recurse_info += recurse_set["direction"] + ";"
+                                recurse_info += recurse_set["direction"]  # + ";"
                             segment_result_info += recurse_info
 
                         # ->.set
@@ -593,7 +593,6 @@ class OceanHuedClam:
                             id_info += str(id_list[-1]) + ")"
                             segment_result_info += id_info
 
-                        a = 0
                         # ->.set
                         if op_segment["to"] != "":
                             # print("to", op_segment["to"])
@@ -611,7 +610,7 @@ class OceanHuedClam:
 
     # 仅在输出时指定的要素集名称（"...->.set_name"）；有引用的情况下，输出本「海染砗磲」时可在声明引用阶段一层一层往回带；
     # 输出QL语句列表
-    def convert(self, set_name: str = "", if_main: bool = True, outputed_list=None) -> list:
+    def convert_old(self, set_name: str = "", if_main: bool = True, outputed_list=None) -> list:
         # 如果这个是主语句，最外层的，那么outputed列表应该清空
         if outputed_list is None:
             outputed_list = []

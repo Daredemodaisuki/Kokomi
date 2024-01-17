@@ -1,6 +1,9 @@
 import copy
+import random
 
 from global_ import print_dict
+
+
 # 要按照type.A(other_condition)[k_v](if)->.B;>;的顺序和结构去整理
 # TODO:不需要改变输入输出集时只需要一句话，需要怎么判断？
 
@@ -16,7 +19,7 @@ class OceanHuedClam:
         self.__around_dict = {}
         self.__global_bbox_list = []  # 南、西、北、东
         self.__id_dict = {}
-        self.__recurse_dict = {}
+        self.__recurse_list = []
         self.__located_in_list = []
 
     def op(self, op: str, para1=None, para2=None, para3=None):
@@ -24,35 +27,35 @@ class OceanHuedClam:
         match op:
             # 不可变位置操作 normal / 可变位置操作 movable / 独立操作 unique
             case "TPE":  # __init__ -> main_type  # 不可变位置操作（开始）
-                #                   ↓nwr_type
-                op_element = {"TPE": [para1]}  # 这个貌似不用？
+                #                                                              ↓nwr_type
+                op_element = {"id": "TPE", "type": "start", "para": [para1]}  # 这个貌似不用？
             case "K_V":  # key_value -> kv_dict  # 不可变位置操作  # or列表，列表元素若是列表，则其为and
-                #                   ↓key, relation, value
-                op_element = {"K_V": [para1, para2, para3]}
+                #                                                              ↓key, relation, value
+                op_element = {"id": "K_V", "type": "normal", "para": [para1, para2, para3]}
             case "ARD":  # around -> around_dict  # 不可变位置操作
-                #                   ↓set/points, set_point, r
-                op_element = {"ARD": [para1, para2, para3]}
+                #                                                              ↓set/points, set_point, r
+                op_element = {"id": "ARD", "type": "normal", "para": [para1, para2, para3]}
             case "SET":  # set_from -> from_OceanHuedClam_list  # 不可变位置操作
-                #                   ↓and/or, set_name
-                op_element = {"SET": [para1, para2]}
+                #                                                              ↓and/or, set_name
+                op_element = {"id": "SET", "type": "normal", "para": [para1, para2]}
             case "BOX":  # set_bbox -> global_bbox_list  # 不可变位置操作  # 南、西、北、东
-                #                   ↓[S, W, N, E]
-                op_element = {"BOX": [para1]}
-            case "RCS":  # extend -> recurse_dict  # 可变位置操作
-                #                   ↓set_name, direction
-                op_element = {"RCS": [para1, para2]}
+                #                                                              ↓[S, W, N, E]
+                op_element = {"id": "BOX", "type": "normal", "para": [para1]}
+            case "RCS":  # extend -> recurse_list  # 可变位置操作
+                #                                                              ↓set_name, direction
+                op_element = {"id": "RCS", "type": "movable", "para": [para1, para2]}
             case "IDe":  # id -> id_dict  # 独立操作  # id=
-                #                   ↓id
-                op_element = {"IDe": [para1]}
+                #                                                              ↓id
+                op_element = {"id": "IDe", "type": "unique", "para": [para1]}
             case "IDn":  # id -> id_dict  # 不可变位置操作  # id><
-                #                   ↓id, operation
-                op_element = {"IDn": [para1, para2]}
+                #                                                              ↓id, operation
+                op_element = {"id": "IDn", "type": "normal", "para": [para1, para2]}
             case "POL":  # located_in -> located_in_list  # 不可变位置操作
-                #                   ↓poly_list
-                op_element = {"POL": [para1]}
+                #                                                              ↓poly_list
+                op_element = {"id": "POL", "type": "normal", "para": [para1]}
             case "ICL":  # include_OceanHuedClam -> include_dict  # 不可变位置操作
-                #                   ↓name, set
-                op_element = {"ICL": [para1, para2]}  # 这个貌似不用？
+                #                                                              ↓name, set
+                op_element = {"id": "ICL", "type": "normal", "para": [para1, para2]}  # 这个貌似不用？
         self.__op_list.append(op_element)
 
     # 海染砗磲（QL语句）之键值关系限制语句：限定查询主体的key与value。
@@ -139,7 +142,7 @@ class OceanHuedClam:
         return self
 
     def extend(self, direction: str, set_name: str = "_") -> 'OceanHuedClam':  # recurse
-        self.__recurse_dict.update({set_name: direction})  # TODO:后续删除
+        self.__recurse_list.append({"set_name": set_name, "direction": direction})  # TODO:后续删除
         self.op("RCS", set_name, direction)
         return self
 
@@ -238,11 +241,11 @@ class OceanHuedClam:
             query_list.append(self)
         return query_list
 
-    def __op_type(self, op: str) -> str:
+    '''def __op_type(self, op: str) -> str:
         movable_op_list = ["RCS"]
-        end_op_list = ["IDe"]
+        unique_op_list = ["IDe"]
         start_op_list = ["TPE"]
-        if not (op in movable_op_list or op in end_op_list or op in start_op_list):
+        if not (op in movable_op_list or op in unique_op_list or op in start_op_list):
             op_type = "normal"
         elif op in start_op_list:
             op_type = "start"
@@ -250,11 +253,76 @@ class OceanHuedClam:
             op_type = "movable"
         else:
             op_type = "unique"
-        return op_type
+        return op_type'''
+
+    def __op_list_to_segment_list(self, op_list: list) -> list:
+        op_segment_list = []
+        op_segment = {"type": "", "op_list": None, "from": "", "to": ""}
+        op_list_to_seg = [op_list[0]]
+        # [{'id': op_id, 'para': para_dict}, ...]
+        for x in range(len(op_list) - 1):
+            # 非unique有且仅有第0项永远是“start”，从第1项（不是0）开始检索
+            # unique一句一段
+            if (op_list[x + 1]["type"] == op_list[x]["type"] or (x == 0 and op_list[x + 1]["type"] == "normal"))\
+                    and op_list[x + 1]["type"] != "unique":
+                op_list_to_seg.append(op_list[x + 1])
+            else:
+                op_segment = {"type": op_list[x]["type"] if op_list[x]["type"] != "start" else "normal",
+                              "op_list": op_list_to_seg,
+                              "from": "",
+                              "to": ""
+                              }
+                op_segment_list.append(op_segment)
+                op_list_to_seg = [op_list[x + 1]]
+        # 最后有剩的
+        op_segment = {"type": op_list[-1]["type"] if op_list[-1]["type"] != "start" else "normal",
+                      "op_list": op_list_to_seg,
+                      "from": "",
+                      "to": ""
+                      }
+        op_segment_list.append(op_segment)
+        return op_segment_list
+
+    # NG：normal+movable NN：normal（只可能在最后一组） UG：unique+movable UU：unique（unique联用时）
+    def __segment_list_to_group_list(self, segment_list: list):
+        op_group_list = []
+        op_group = {"type": "", "group": None}
+        segment_list_to_group = []
+        # 因为第一个op一定是TPE，第一段一定是normal，只用找movable和unique
+        for x in range(len(segment_list)):
+            if segment_list[x]["type"] == "movable":
+                # 把自己加进去在入组
+                segment_list_to_group.append(segment_list[x])
+                op_group = {"type": "NG" if segment_list[x - 1]["type"] == "normal" else "UG",
+                            "seg_list": segment_list_to_group}
+                op_group_list.append(op_group)
+                segment_list_to_group = []
+            elif segment_list[x]["type"] == "unique":
+                # 前面的段先入组，这个下一次判断再说（如果下一次还是纯U，那么会触发下一次的「前面先入组」）
+                if segment_list_to_group:
+                    op_group = {"type": "NN" if segment_list[x - 1]["type"] == "normal" else "UU",
+                                "seg_list": segment_list_to_group}
+                    op_group_list.append(op_group)
+                    segment_list_to_group = []
+                segment_list_to_group.append(segment_list[x])
+            else:
+                # 如果上一个是unique，那么使之单独入组，不忍就是normal，正常排列
+                # 注意：第一段（包含start的normal段）会走这里，第一段没有上一个
+                if x > 0 and segment_list[x - 1]["type"] == "unique":
+                    op_group = {"type": "UU",
+                                "seg_list": segment_list_to_group}
+                    op_group_list.append(op_group)
+                    segment_list_to_group = []
+                segment_list_to_group.append(segment_list[x])
+        # 还有剩的只能是纯normal
+        if segment_list_to_group:
+            op_group = {"type": "NN",
+                        "seg_list": segment_list_to_group}
+            op_group_list.append(op_group)
+        return op_group_list
 
     def convert_new(self, set_name: str = "", if_main: bool = True, outputed_list=None) -> list:
         # 如果这个是主语句，最外层的，那么outputed列表应该清空
-        temp_set_name_dict = {}
         if outputed_list is None:
             outputed_list = []
         result_info = ""
@@ -276,408 +344,269 @@ class OceanHuedClam:
         result_info += include_info
 
         # 正式数据开始
-        # 分段：除了可变位置、独立操作，其余操作可以乱序，所以先寻找需要不同的操作并分段，每段只有一种操作
-        op_segment_list = []
-        op_start = 0
-        op_end = 0
-        this_op_type = "start"
-        now_op_type = "start"
-        same_type_op_list = []
-        for x in range(len(self.__op_list)):
-            # 提取op标识符
-            op_id = list(self.__op_list[x].keys())[0]
-            # print(op, self.__op_list[x][op_id])
-            # 判断op类型
-            this_op_type = self.__op_type(op_id)
-            if this_op_type != now_op_type:
-                op_end = x  # 找到相同类型op的最后一个，将op类型和同类op添加到段
-                op_segment_list.append([now_op_type, self.__op_list[op_start: op_end]])
-                op_start = x
-                now_op_type = this_op_type
-        # 最后一段（前面for循环寻到最后一段因为没有变化不会直接添加，for完成之后this_op_type即是最后一个的、最后一段的type）
-        op_segment_list.append([this_op_type, self.__op_list[op_start:len(self.__op_list)]])
-
-        # 分组：判断是下列哪种情况，并将符合条件的段组在一起：
-        #   纯不可变位置操作段：type.A(other_conditionL)[k_v](other_conditionR)->.B;
-        #   纯独立操作段：type(id)->.B;
-        #   不可变位置操作段+可变位置操作段：type.A(other_conditionL)[k_v](other_conditionR)->.B;.B < ->.C;
-        #   独立操作段+可变位置操作段：type(id)->.A;.A < ->.B;
-        # 上述句法只有最后一个集合名称是convert的set_name参数
-        '''==下面一部分基于 New Bing 写的（偷懒）==
-
-        在python中，有1个列表，里面包含多个数字，现在<1的数字属于A类，1~10之间的属于B类，>10的属于C类，
-        如果希望分割该列表为数个列表，每个分出的子列表均满足下列4种条件之一：
-        1）子列表全部由A类数字组成；
-        2）子列表全部由B类数字组成；
-        3）子列表最后一项为C类，其余全部由A类数字组成；
-        4）子列表最后一项为C类，其余全部由B类数字组成，
-        可以如何分割？
-        
-        def split_list(lst):
-            result = []
-              temp = []
-        for i in lst:
-            if i < 1:
-                temp.append(i)
-            elif 1 <= i <= 10:
-                temp.append(i)
-            else:
-                temp.append(i)
-                result.append(temp)
-                temp = []
-        if temp:
-            result.append(temp)
-        return result
-        
-        整挺好，但可能会出现A、B类数字混合在一起的情况，故还需要添加判断是否同temp前一项相同
-        '''
-        op_group_list = []
-        op_seg_list_temp = []
-        for op_segment in op_segment_list:
-            # print(op_segment)
-            if op_segment[0] == "start" or op_segment[0] == "normal":
-                # 跟上一个temp一不一样，不一样就把之前一样的temp甩给result_list，刷新temp，否则在temp添加op
-                if op_seg_list_temp and (op_seg_list_temp[-1][0] == "start" or op_seg_list_temp[-1][0] == "normal"):
-                    op_seg_list_temp.append(op_segment)
-                else:
-                    if op_seg_list_temp:
-                        op_seg_list_temp.insert(0, op_seg_list_temp[-1][0])
-                        op_group_list.append(op_seg_list_temp)
-                    op_seg_list_temp = [op_segment]
-            elif op_segment[0] == "unique":
-                if op_seg_list_temp and op_seg_list_temp[-1][0] == "unique":
-                    op_seg_list_temp.append(op_segment)
-                else:
-                    if op_seg_list_temp:
-                        op_seg_list_temp.insert(0, op_seg_list_temp[-1][0])
-                        op_group_list.append(op_seg_list_temp)
-                    op_seg_list_temp = [op_segment]
-            else:  # “movable”
-                op_seg_list_temp.append(op_segment)
-                if op_seg_list_temp[-2]:
-                    op_seg_list_temp.insert(0, op_seg_list_temp[-2][0] + "+movable")
-                else:
-                    print(print_dict[0x2C10])
-                op_group_list.append(op_seg_list_temp)
-                op_seg_list_temp = []
-        if op_seg_list_temp:
-            op_seg_list_temp.insert(0, op_seg_list_temp[-1][0])
-            op_group_list.append(op_seg_list_temp)
-        # op_group_list[x] = [group_type, seg1, seg2]
-        # op_group_list[x][0] = group_type
-        # op_group_list[x][1] = seg1 = [seg_type, [op1, op2]]
-        # op_group_list[x][2] = seg2 = [seg_type, [op1, op2]]
-        # op_group_list[x][2][0] = seg_type
-        # op_group_list[x][2][1] = op1
-        # 按照4类重组后，start必是第一组第一段op_segment，如果其后是normal段，则合并，
-        if len(op_group_list[0]) > 1 and op_group_list[0][2][0] == "normal":
-            new_op_group_list = copy.deepcopy(op_group_list)
-            op_seg_list_temp = new_op_group_list[0][1][1]  # [{'TPE': ['nwr']}]
-            op_seg_list_temp.extend(new_op_group_list[0][2][1])
-            new_op_group_list[0][1] = ["normal", op_seg_list_temp]
-            if len(new_op_group_list[0]) > 2:
-                for x in range(len(new_op_group_list[0]) - 3):
-                    new_op_group_list[0][x + 2] = new_op_group_list[0][x + 3]
-            op_group_list[0] = new_op_group_list[0][0:len(new_op_group_list[0]) - 1]
-
+        # print(self.__op_list)
+        # op分段分组
+        op_list = self.__op_list
+        op_segment_list = self.__op_list_to_segment_list(op_list)
+        op_group_list = self.__segment_list_to_group_list(op_segment_list)
+        # 注意：这里改了里面的seg就改了！
+        for x in range(len(op_group_list) - 1):
+            # 二段组 + 二段组：第一组第2段to变inter，第二组1段from变inter
+            # 二段组 + 单段组：二段组第2段to变inter，单段组（只有1段）from变inter
+            if op_group_list[x]["type"] in ["NG", "UG"]:
+                randint = random.randint(0, 9999)  # 随机名称
+                op_group_list[x]["seg_list"][1]["to"] = "Temp_inter" + f"{randint:04d}"
+                op_group_list[x + 1]["seg_list"][0]["from"] = "Temp_inter" + f"{randint:04d}"
+                # print("二段组 + 单/二段组", op_group_list[x]["seg_list"][1])
+            # 单段组 + 二段组：单段组to变inter，二段组第1段from变inter
+            # 单段组 + 单段组：第一组第to变inter，第二组（只有1段）from变inter
+            elif op_group_list[x]["type"] in ["NN", "UU"]:
+                randint = random.randint(0, 9999)  # 随机名称
+                op_group_list[x]["seg_list"][0]["to"] = "Temp_inter" + f"{randint:04d}"
+                op_group_list[x + 1]["seg_list"][0]["from"] = "Temp_inter" + f"{randint:04d}"
+                # print("单段组 + 单/二段组", op_group_list[x]["seg_list"][0])
+        # 最后一组最后一段的to必须是由convert函数的参数指定的name
+        # TODO:其他段呢？
+        op_group_list[-1]["seg_list"][-1]["to"] = set_name
+        '''for x in op_group_list:
+            print(x["type"], x["seg_list"])'''
         # 对每个op组的每个op段按别不可变位置、可变位置、独立操作开刀
-        # TODO:独立操作
-
-        #   纯不可变位置操作段：type.A(other_conditionL)[k_v](other_conditionR)->.B;
-        #   纯独立操作段：type(id)->.B;
-        #   不可变位置操作段+可变位置操作段：type.A(other_conditionL)[k_v](other_conditionR)->.B;.B < ->.C;
-        #   独立操作段+可变位置操作段：type(id)->.A;.A < ->.B;
         for op_group in op_group_list:
-            # print("op-group:", op_group)
+            # NG、UG组（二段组）「组内」无论何种情况都需要inner过渡：1段to变inner，2段from变inner
+            if op_group["type"] in ["NG", "UG"]:
+                randint = random.randint(0, 9999)  # 随机名称
+                op_group["seg_list"][0]["to"] = "Temp_inner" + f"{randint}"
+                op_group["seg_list"][1]["from"] = "Temp_inner" + f"{randint}"
+                # print(op_group["type"], "inner_to", op_group["seg_list"][0]["to"])
+            # 处理组内各段内容
+            for op_segment in op_group["seg_list"]:
+                from_OceanHuedClam_list = []  # or列表，列表元素若是列表，则其为and
+                kv_dict = {}
+                around_dict = {}
+                global_bbox_list = []  # 南、西、北、东
+                recurse_list = []
+                located_in_list = []
+                segment_result_info = ""
+                id_list = []
+                temp_name_union = "Temp_union" + f"{random.randint(0, 9999):04d}"
+                # print(op_segment)
 
-            # segment_result_info = self.__main_type
-            from_OceanHuedClam_list = []  # or列表，列表元素若是列表，则其为and
-            # main_type = nwr_type
-            kv_dict = {}
-            around_dict = {}
-            global_bbox_list = []  # 南、西、北、东
-            id_dict = {}
-            recurse_dict = {}
-            located_in_list = []
-            group_result_info = ""
-
-            temp_set_name1 = ""
-            temp_set_name2 = ""
-
-            next_nor = False  # 如果这组是normal+movable，下组是normal，要传一个临时集合名（temp_set_name1）
-            before_nor = False  # 如果这组是normal，上组是normal+movable，要接这个临时集合名（temp_set_name2）
-            group_end = False  # 一个海染最后一组组尾的最后一个段，则必须导出到参数给的名字（优先级最高）
-
-            for op_segment in op_group:
-                if isinstance(op_segment, str):
-                    # TODO:使得临时中间集合名称随机
-                    # TODO:传递中间集合名称还有问题，检查具体谁传谁咋传
-                    # 不动op组的第一项：组类型
-                    # 如果这组是normal+movable，下组是normal，要传一个临时集合名，否则
-                    # Q1 = OceanHuedClam("nwr").key_value("place", "=", "city").extend("<").located_in([1,1,4,5])
-                    # Q2 = OceanHuedClam("nwr").include_OceanHuedClam("Q1", Q1).set_from("Q1").set_bbox(11,45,14,19).extend(">>")
-                    # 会得到
-                    # ['nwr["place"="city"]->.Q1;.Q1<;nwr(poly:"1 1 4 5")->.Q1;nwr.Q1(bbox:45,14,19,11);>>;']
-                    #                        ↑↑↑↑↑↑↑                       ↑↑↑
-                    # 如果这组是normal+movable，且没有下一组，也要传
-                    if op_segment == "normal+movable":
-                        # print("now", op_segment)
-                        # print("114514", len(op_group_list), op_group_list.index(op_group) + 1)
-                        if (len(op_group_list) > op_group_list.index(op_group) + 1
-                            and (op_group_list[op_group_list.index(op_group) + 1][0] == "normal"
-                                 or op_group_list[op_group_list.index(op_group) + 1][0] == "normal+movable"))\
-                                or len(op_group_list) == op_group_list.index(op_group) + 1:
-                            temp_set_name1 = "temp" + str(hash(temp_set_name1 + "1"))[0:4]
-                            temp_set_name_dict.update({"N+M→N(+M)的N→M": temp_set_name1})
-                            # print("->", temp_set_name_dict["N+M→N(+M)的N→M"])
-                            # temp_set_name1 = ""
-                            next_nor = True
-                        else:
-                            next_nor = False
-                    # 如果这组是normal，上组是normal+movable，要接这个临时集合名
-                    if op_segment == "normal" or op_segment == "normal+movable":
-                        if op_group_list.index(op_group) > 0 and \
-                                op_group_list[op_group_list.index(op_group) - 1][0] == "normal+movable":
-                            temp_set_name1 = copy.deepcopy(temp_set_name_dict["N+M→N(+M)的N→M"])
-                            # print("<-1", temp_set_name2)
-                            # temp_set_name_dict["N+M→N(+M)的N→M"] = ""
-                            before_nor = True
-                        else:
-                            before_nor = False
-                if isinstance(op_segment, list):
-                    # 如果这是一个海染最后一组组尾的最后一个段，则必须导出到参数给的名字
-                    # if len(op_group_list) == op_group_list.index(op_group) + 1: 错误的，这是最后一组
-                    # print("最后", len(op_group), op_group.index(op_segment) + 1)
-                    if len(op_group) == op_group.index(op_segment) + 1\
-                            and len(op_group_list) == op_group_list.index(op_group) + 1:
-                        group_end = True
-                    # 将不可变位置操作段中的信息保存以备输出
-                    match op_segment[0]:
-                        case "normal":
-                            for op in op_segment[1]:
-                                # print("op", op)
-                                op_id = list(op.keys())[0]
-                                # op = {op_id: [para1, para2, para3]}
-                                # op[op_id] = [para1, para2, para3]
-                                # op[op_id][0] = para1
-                                match op_id:
-                                    case "TPE":
-                                        continue
-                                    case "K_V":
-                                        # {key: {"value": value, "relation": relation}}
-                                        kv_dict.update(
-                                            {op[op_id][0]: {"value": op[op_id][2], "relation": op[op_id][1]}})
-                                    case "ARD":
-                                        # 数据集{set_point: r} 点串线{r: set_point}
-                                        if op[op_id][0] == "set":
-                                            around_dict.update({op[op_id][1]: op[op_id][2]})
-                                        else:
-                                            around_dict.update({op[op_id][2]: op[op_id][1]})
-                                    case "SET":
-                                        from_OceanHuedClam_list.append(op[op_id][1])
-                                    case "BOX":
-                                        if global_bbox_list:
-                                            print(print_dict[0x11C0])
-                                        global_bbox_list = op[op_id][0]
-                                    # case "IDn":  # TODO:flag位
-                                    case "POL":
-                                        located_in_list = op[op_id][0]
-                                    case "ICL":
-                                        continue
-                                    case _:
-                                        print(print_dict[0x31C0].format(op_id=op_id))
-
-                            # 整体输出不可变位置操作
-                            # 如果这组是normal，上组是normal+movable，要接临时集合名
-                            if before_nor == True:
-                                from_OceanHuedClam_list.append(temp_set_name_dict["N+M→N(+M)的M→N"])
-
-                            # from_other_set（并集）
-                            if len(from_OceanHuedClam_list) > 1:
-                                from_info = "("
-                                for from_OceanHuedClam in from_OceanHuedClam_list:
-                                    if isinstance(from_OceanHuedClam, str):
-                                        from_info += self.__main_type + "." + from_OceanHuedClam + ";"
+                # 警告部分没有问题
+                match op_segment["type"]:
+                    case "normal":
+                        for op in op_segment["op_list"]:
+                            match op["id"]:
+                                case "TPE":
+                                    continue
+                                case "K_V":
+                                    # {key: {"value": value, "relation": relation}}
+                                    kv_dict.update(
+                                        {op["para"][0]: {"value": op["para"][2], "relation": op["para"][1]}})
+                                case "ARD":
+                                    # 数据集{set_point: r} 点串线{r: set_point}
+                                    if op["para"][0] == "set":
+                                        around_dict.update({op["para"][1]: op["para"][2]})
                                     else:
-                                        from_info += self.__main_type
-                                        for x in from_OceanHuedClam:
-                                            from_info += "." + x
-                                        from_OceanHuedClam += ";"
-                                temp_set_name_dict.update({"并集": "temp" + str(hash(from_info))[0:4]})  # 用hash取个名字
-                                from_info += ")->." + temp_set_name_dict["并集"] + ";"
-                                group_result_info += from_info
+                                        around_dict.update({op["para"][2]: op["para"][1]})
+                                case "SET":
+                                    from_OceanHuedClam_list.append(op["para"][1])
+                                case "BOX":
+                                    if global_bbox_list:
+                                        print(print_dict[0x11C0])
+                                    global_bbox_list = op["para"][0]
+                                # case "IDn":  # TODO:flag位
+                                case "POL":
+                                    located_in_list = op["para"][0]
+                                case "ICL":
+                                    continue
+                                case _:
+                                    print(print_dict[0x31C0].format(op_id=op["id"]))
 
-                            # type
-                            group_result_info += self.__main_type
-                            # print("<-2", temp_set_name1)
+                        # 开始整体输出不可变位置操作
+                        if op_segment["from"] != "":
+                            from_OceanHuedClam_list.append(op_segment["from"])
 
-                            # from_other_set（单个集合/交集）
-                            if len(from_OceanHuedClam_list) == 1:
-                                from_info = ""
-                                if isinstance(from_OceanHuedClam_list[0], str):
-                                    from_info += "." + from_OceanHuedClam_list[0]
+                        # from_other_set（并集）
+                        if len(from_OceanHuedClam_list) > 1:
+                            from_info = "("
+                            for from_OceanHuedClam in from_OceanHuedClam_list:
+                                if isinstance(from_OceanHuedClam, str):
+                                    from_info += self.__main_type + "." + from_OceanHuedClam + ";"
                                 else:
-                                    if len(from_OceanHuedClam_list[0]) > 1:
-                                        print(print_dict[0x11A0]
-                                              .format(set=(set_name if set_name != "" else "default")))
-                                    for x in from_OceanHuedClam_list[0]:
+                                    from_info += self.__main_type
+                                    for x in from_OceanHuedClam:
                                         from_info += "." + x
-                                group_result_info += from_info
-                            else:  # 并集：前面把并集写出来了，现在缀到type后面
-                                if from_OceanHuedClam_list:
-                                    group_result_info += "." + temp_set_name_dict["并集"]
+                                    from_OceanHuedClam += ";"
+                            from_info += ")->." + temp_name_union + ";"
+                            segment_result_info += from_info
 
-                            # around
-                            if around_dict:
-                                around_info = "(around."
-                                for around in around_dict:
-                                    # 要素集{set_point: r}；点串线{r: set_point}
-                                    if isinstance(around, str):
-                                        around_info += around + ":" + str(
-                                            around_dict[around]) + ")"
-                                    else:
-                                        around_info += ":" + str(around)
-                                        for point in around_dict[around]:
-                                            around_info += "," + str(point)
-                                        around_info += ")"
-                                group_result_info += around_info
+                        # type
+                        segment_result_info += self.__main_type
 
-                            # poly
-                            if located_in_list:
-                                poly_info = "(poly:\""
-                                for x in range(len(located_in_list) - 1):
-                                    poly_info += str(located_in_list[x]) + " "
-                                poly_info += str(
-                                    located_in_list[len(located_in_list) - 1]) + "\")"
-                                group_result_info += poly_info
+                        # from_other_set（单个集合/交集）
+                        if len(from_OceanHuedClam_list) == 1:
+                            from_info = ""
+                            if isinstance(from_OceanHuedClam_list[0], str):
+                                from_info += "." + from_OceanHuedClam_list[0]
+                            else:
+                                if len(from_OceanHuedClam_list[0]) > 1:
+                                    print(print_dict[0x11A0]
+                                          .format(set=(set_name if set_name != "" else "default")))
+                                for x in from_OceanHuedClam_list[0]:
+                                    from_info += "." + x
+                            segment_result_info += from_info
+                        else:  # 并集：前面把并集写出来了，现在缀到type后面
+                            if from_OceanHuedClam_list:
+                                segment_result_info += "." + temp_name_union
 
-                            # print("<-3", temp_set_name1)
-                            # k_v
-                            if kv_dict:
-                                kv_info = ""
-                                # print(kv_dict)
-                                for key in kv_dict:
-                                    value = kv_dict[key].get("value")
-                                    match kv_dict[key].get("relation"):
-                                        case "exist":  # 存在key（value可不填）
-                                            now_info = "[\"" + key + "\"]"
-                                        case "!exist":  # 不存在key
-                                            now_info = "[!\"" + key + "\"]"
-                                        case "=":  # 存在key且对应value匹配
-                                            now_info = "[\"" + key + "\"" + "=\"" + value + "\"]"
-                                        case "!=":  # 存在key但对应value不匹配 或 不存在key
-                                            now_info = "[\"" + key + "\"" + "!=\"" + value + "\"]"
-                                        case "=!=":  # 必须存在key但对应value不匹配
-                                            now_info = "[\"" + key + "\"][\"" + key + "\"!=\"" + value + "\"]"
-                                        case "v-reg":  # v可含正则表达式
-                                            now_info = "[\"" + key + "\"~\"" + value + "\"]"
-                                        case "!v-reg":  # v可含正则表达式但不匹配
-                                            now_info = "[\"" + key + "\"!~\"" + value + "\"]"
-                                        case "kv-reg":  # kv皆可含正则表达式
-                                            now_info = "[~\"" + key + "\"~\"" + value + "\"]"
-                                        case "v-Aa_no_care":  # v可含正则表达式且不分大小写
-                                            now_info = "[~\"" + key + "\"~\"" + value + "\",i]"
-                                        case _:
-                                            now_info = ""
-                                            print(print_dict[0x31C1].format(relation=kv_dict[key].get("relation")))
-                                    kv_info += now_info
-                                group_result_info += kv_info
-
-                            # bbox
-                            if global_bbox_list:
-                                '''if not if_main:
-                                    # TODO:这个判断需要吗？ -> 没必要
-                                    print(print_dict[0x11A1].format(set=set_name))
+                        # around
+                        if around_dict:
+                            around_info = "(around."
+                            for around in around_dict:
+                                # 要素集{set_point: r}；点串线{r: set_point}
+                                if isinstance(around, str):
+                                    around_info += around + ":" + str(
+                                        around_dict[around]) + ")"
                                 else:
-                                    bbox_info = "(bbox:"
-                                    for x in range(3):
-                                        bbox_info += str(global_bbox_list[x]) + ","
-                                    bbox_info += str(global_bbox_list[3]) + ")"
-                                    group_result_info += bbox_info'''
+                                    around_info += ":" + str(around)
+                                    for point in around_dict[around]:
+                                        around_info += "," + str(point)
+                                    around_info += ")"
+                            segment_result_info += around_info
+
+                        # poly
+                        if located_in_list:
+                            poly_info = "(poly:\""
+                            for x in range(len(located_in_list) - 1):
+                                poly_info += str(located_in_list[x]) + " "
+                            poly_info += str(
+                                located_in_list[len(located_in_list) - 1]) + "\")"
+                            segment_result_info += poly_info
+
+                        # k_v
+                        if kv_dict:
+                            kv_info = ""
+                            # print(kv_dict)
+                            for key in kv_dict:
+                                value = kv_dict[key].get("value")
+                                match kv_dict[key].get("relation"):
+                                    case "exist":  # 存在key（value可不填）
+                                        now_info = "[\"" + key + "\"]"
+                                    case "!exist":  # 不存在key
+                                        now_info = "[!\"" + key + "\"]"
+                                    case "=":  # 存在key且对应value匹配
+                                        now_info = "[\"" + key + "\"" + "=\"" + value + "\"]"
+                                    case "!=":  # 存在key但对应value不匹配 或 不存在key
+                                        now_info = "[\"" + key + "\"" + "!=\"" + value + "\"]"
+                                    case "=!=":  # 必须存在key但对应value不匹配
+                                        now_info = "[\"" + key + "\"][\"" + key + "\"!=\"" + value + "\"]"
+                                    case "v-reg":  # v可含正则表达式
+                                        now_info = "[\"" + key + "\"~\"" + value + "\"]"
+                                    case "!v-reg":  # v可含正则表达式但不匹配
+                                        now_info = "[\"" + key + "\"!~\"" + value + "\"]"
+                                    case "kv-reg":  # kv皆可含正则表达式
+                                        now_info = "[~\"" + key + "\"~\"" + value + "\"]"
+                                    case "v-Aa_no_care":  # v可含正则表达式且不分大小写
+                                        now_info = "[~\"" + key + "\"~\"" + value + "\",i]"
+                                    case _:
+                                        now_info = ""
+                                        print(print_dict[0x31C1].format(relation=kv_dict[key].get("relation")))
+                                kv_info += now_info
+                            segment_result_info += kv_info
+
+                        # bbox
+                        if global_bbox_list:
+                            '''if not if_main:
+                                # TODO:这个判断需要吗？ -> 没必要
+                                print(print_dict[0x11A1].format(set=set_name))
+                            else:
                                 bbox_info = "(bbox:"
                                 for x in range(3):
                                     bbox_info += str(global_bbox_list[x]) + ","
                                 bbox_info += str(global_bbox_list[3]) + ")"
-                                group_result_info += bbox_info
+                                segment_result_info += bbox_info'''
+                            bbox_info = "(bbox:"
+                            for x in range(3):
+                                bbox_info += str(global_bbox_list[x]) + ","
+                            bbox_info += str(global_bbox_list[3]) + ")"
+                            segment_result_info += bbox_info
 
-                            # ->.set
-                            # print("<-4",group_end , temp_set_name1)
-                            # 一个海染最后一个段必须导去指定的set_name
-                            if group_end == True:
-                                # print(temp_set_name1)
-                                temp_set_name1 = set_name
-                            if set_name != "" and temp_set_name1 != "":
-                                group_result_info += "->." + temp_set_name1
-                            elif set_name != "" and temp_set_name1 == "":
-                                group_result_info += "->." + set_name
-                            group_result_info += ";"
-                            # print("op-group>>>", op_group, "\n>>>", group_result_info)
+                        # ->.set
+                        if op_segment["to"] != "":
+                            # print("to", op_segment["to"])
+                            segment_result_info += "->." + op_segment["to"]
+                        elif set_name != "" and op_segment["to"] == "":
+                            segment_result_info += "->." + set_name
+                        segment_result_info += ";"
 
-                            '''# 看下一op段是什么，如果是可变那么传递参数
-                            if op_group[op_group.index(op_segment) + 1] and op_group[op_group.index(op_segment) + 1][0] == "movable":
-                                temp_set_name_dict.update({"不变-变": "temp" + str(hash(op_segment))[0:4]})'''
+                    case "movable":
+                        for op in op_segment["op_list"]:
+                            match op["id"]:
+                                case "RCS":
+                                    recurse_list.append({"set_name": op["para"][0], "direction": op["para"][1]})
+                                case _:
+                                    print(print_dict[0x31C0].format(op_id=op["id"]))
 
-                        case "movable":
-                            for op in op_segment[1]:
-                                op_id = list(op.keys())[0]
-                                # op = {op_id: [para1, para2, para3]}
-                                # op[op_id] = [para1, para2, para3]
-                                # op[op_id][0] = para1
-                                match op_id:
-                                    case "RCS":
-                                        recurse_dict.update({op[op_id][0]: op[op_id][1]})
-                                    case _:
-                                        print(print_dict[0x31C0].format(op_id=op_id))
+                        # 整体输出可变位置操作
+                        # extend
+                        # TODO:多个extend之间的r_inter集合名称、什么时候加「;」
+                        if recurse_list:
+                            recurse_info = ""
+                            # recurse_list = [{"set_name": set_name, "direction": direction}, ...]，set_name默认"_"
+                            for recurse_set in recurse_list:
+                                if op_segment["from"] != "":
+                                    recurse_info += "." + op_segment["from"]
+                                elif recurse_set != "_":
+                                    recurse_info += "." + recurse_set["set_name"]
+                                recurse_info += recurse_set["direction"] + ";"
+                            segment_result_info += recurse_info
 
-                                # 整体输出可变位置操作
+                        # ->.set
+                        if op_segment["to"] != "":
+                            # print("to", op_segment["to"])
+                            segment_result_info += "->." + op_segment["to"]
+                            segment_result_info += ";"
+                        elif set_name != "" and op_segment["to"] == "":
+                            segment_result_info += "->." + set_name
+                            segment_result_info += ";"
 
-                                # extend(recurse)
-                                recurse_info = ""
-                                if recurse_dict:
-                                    # print(temp_set_name1) -> 传过来了的，有
-                                    if next_nor == True:  # 沿用本组第一段的名字
-                                        # print(temp_set_name1)
-                                        set_name_rec = temp_set_name1
-                                    else:
-                                        set_name_rec = set_name
-                                    for recurse_set in recurse_dict:
-                                        if recurse_set == "_" and set_name_rec == "":
-                                            recurse_info = recurse_dict[recurse_set] + ";"
-                                        elif recurse_set != "_":
-                                            recurse_info += "." + recurse_set + recurse_dict[recurse_set]
-                                        else:
-                                            recurse_info += "." + set_name_rec + recurse_dict[recurse_set]
-                                    a = 0
-                                    # ->.set
-                                    # print(next_nor, temp_set_name2)
-                                    if next_nor == True:  # 给下一组第一段的名字
-                                        temp_set_name2 = "temp" + str(hash(group_result_info))[0:4]
-                                        temp_set_name_dict.update({"N+M→N(+M)的M→N": temp_set_name2})
-                                        # print("aaaaaaaaaaaaaaaaaa", set_name, temp_set_name2)
-                                    # 但是一个海染最后一个段必须导去指定的set_name
-                                    # print(group_end)
-                                    if group_end == True:
-                                        temp_set_name2 = ""
-                                    if set_name != "" and temp_set_name2 != "":
-                                        recurse_info += "->." + temp_set_name2
-                                    elif set_name != "" and temp_set_name2 == "":
-                                        recurse_info += "->." + set_name
-                                    recurse_info += ";"
-                                group_result_info += recurse_info
-                                '''# ->.set
-                                if next_nor == True:  # 给下一组第一段的名字
-                                    temp_set_name2 = "temp" + str(hash(group_result_info))[0:4]
-                                    temp_set_name_dict.update({"N+M→N(+M)的M→N": temp_set_name2})
-                                if set_name != "" and temp_set_name2 != "":
-                                    group_result_info += "->." + temp_set_name2
-                                elif set_name != "" and temp_set_name2 == "":
-                                    group_result_info += "->." + set_name
-                                group_result_info += ";"'''
+                    case "unique":
+                        for op in op_segment["op_list"]:
+                            match op["id"]:
+                                case "IDe":  # op("IDe", directive_id)
+                                    id_list.append(op["para"][0])
+                                case "FOR":
+                                    continue  # TODO:for_each
+                                case "CRP":
+                                    continue  # TODO:compare
+                                case "IN_":
+                                    continue  # TODO:is_in
+                                case _:
+                                    print(print_dict[0x31C0].format(op_id=op["id"]))
 
+                        # 整体输出独立操作
+                        # id
+                        if id_list:
+                            id_info = self.__main_type + "(id:"
+                            for x in range(len(id_list) - 1):
+                                id_info += str(id_list[x]) + ","
+                            id_info += str(id_list[-1]) + ")"
+                            segment_result_info += id_info
 
+                        a = 0
+                        # ->.set
+                        if op_segment["to"] != "":
+                            # print("to", op_segment["to"])
+                            segment_result_info += "->." + op_segment["to"]
+                            segment_result_info += ";"
+                        elif set_name != "" and op_segment["to"] == "":
+                            segment_result_info += "->." + set_name
+                            segment_result_info += ";"
 
-
-            result_info += group_result_info
+                    case _:
+                        continue
+                # for each segment的主要部分结束，将本段info加入result
+                result_info += segment_result_info
         return [result_info]
 
     # 仅在输出时指定的要素集名称（"...->.set_name"）；有引用的情况下，输出本「海染砗磲」时可在声明引用阶段一层一层往回带；
@@ -803,9 +732,10 @@ class OceanHuedClam:
             result += ";"
             # extend(recurse)
             recurse_info = ""
-            if self.__recurse_dict:
-                for recurse in self.__recurse_dict:
-                    recurse_info += "." + recurse + self.__recurse_dict[recurse] + ";"
+            if self.__recurse_list:
+                for recurse in self.__recurse_list:
+                    # .append({"set_name": set_name, "direction": direction})
+                    recurse_info += "." + recurse["set_name"] + recurse["direction"] + ";"
             result += recurse_info
             # 结束
             result_list.append(result)

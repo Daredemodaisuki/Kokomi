@@ -33,6 +33,14 @@ class Kokomi:
     def how_are_you(self):
         print("KOKOMI: 当前能量值为", self.energy, "。\n")
 
+    # 清空锦囊（要素）本地字典
+    def fresh_up(self) -> 'Kokomi':
+        self.directive_type = ["node", "way", "relation"]
+        self.directive_dict = {"node": {}, "way": {}, "relation": {}}
+        self.directive_text_temp = ""
+        print(print_dict[0x0000])
+        return self
+
     # 海祇岛（Network）连接参数设置：指定查询的api参数。
     #   参数1为【预设名称，str】（"OSMde"、"OSMru"、"OGF"、"None"）：使用预设珊瑚宫（Overpass）伺服器配置，或不使用预设（"None"）；
     #   参数2为【自定名称，str】：参数1为"None"时，自定义珊瑚宫伺服器名称，默认为空；
@@ -138,7 +146,7 @@ class Kokomi:
     #   {锦囊ID: {
     #       "type": 锦囊类型,
     #       "tag_dict": {键名: 值, ...},
-    #       "member_dict": {成员类型 + ID: 角色, ...},
+    #       "member_dict": {ID: {"type": 成员类型, "role": 角色}, ...},
     #       "node_list": [ID1, ID2, ...],
     #       "text": 报文全文,
     #       "lon_lat": [经度, 纬度]
@@ -209,7 +217,7 @@ class Kokomi:
                         member_role = line_text[line_text.find("role=\"") + 6
                                                 :line_text.find("\"/", line_text.find("role=\"") + 6)]
                         # print(member_type, member_ref, member_role)
-                        member_dict.update({member_type + member_ref: member_role})
+                        member_dict.update({member_ref: {"type": member_type, "role": member_role}})
                     if line_text.find("<nd") != -1:
                         node_ref = line_text[line_text.find("ref=\"") + 5
                                              :line_text.find("\"/", line_text.find("ref=\"") + 5)]

@@ -128,7 +128,7 @@ print("=====================")
 Q1 = OceanHuedClam("nwr").key_value("place", "=", "city").extend("<").located_in([1,1,4,5]).key_value("name", "exist")
 Q2 = OceanHuedClam("nwr").include_OceanHuedClam("Q1", Q1).set_from("Q1").set_bbox(11,45,14,19).extend(">>").key_value("a", "!exist")
 Q3 = OceanHuedClam("nwe").include_OceanHuedClam("Q2", Q2).around("Q2", 100).include_OceanHuedClam("Q1", Q1).set_from("Q1")
-print(Q3.convert_new())
+print(Q3.convert())
 '''
 【成功】
 ----------
